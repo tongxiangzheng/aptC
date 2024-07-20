@@ -1,0 +1,228 @@
+from collections import defaultdict
+from loguru import logger as log
+from PackageInfo import PackageInfo
+def compareVersion(version1,version2):
+	# -1: version1<version2 0:version1==version2 1:version1>version2
+	v1=version1.split('.')
+	v2=version2.split('.')
+	for i in range(min(len(v1),len(v2))):
+		if v1[i]<v2[i]:
+			return -1
+		if v1[i]>v2[i]:
+			return -1
+	if len(v1)!=len(v2):
+		log.warning("version cannot compare, v1: "+version1+" v2: "+version2)
+	return 0
+class PackageEntry:
+	def __init__(self,name:str,flags:str,version:str,release:str):
+		self.name=name
+		self.flags=flags
+		self.version=version
+		self.release=release
+	def checkMatch(self,dist):
+		if self.flags is None:
+			return True
+		if dist.version is None:
+			log.warning(self.name+" have problem: dist version is None")
+			return True
+		flags=self.flags
+		if self.flags=='EQ' and dist.flags!='EQ':
+			if dist.flags=='LE':
+				flags='GE'
+			elif dist.flags=='LT':
+				flags='GT'
+			elif dist.flags=='GE':
+				flags='LE'
+			elif dist.flags=='GT':
+				flags='LT'
+		if flags=='EQ':
+			if compareVersion(dist.version,self.version)==0 and (self.release is None or dist.release is None or dist.release==self.release):
+				return True
+			else:
+				return False
+		elif flags=='LE':
+			if compareVersion(dist.version,self.version)==-1 or (compareVersion(dist.version,self.version)==0 and (self.release is None or dist.release is None or dist.release<self.release)):
+				return True
+			else:
+				return False
+		elif flags=='LT':
+			if compareVersion(dist.version,self.version)==-1 or (compareVersion(dist.version,self.version)==0 and (self.release is None or dist.release is None or dist.release<=self.release)):
+				return True
+			else:
+				return False
+		elif flags=='GE':
+			if compareVersion(dist.version,self.version)==1 or (compareVersion(dist.version,self.version)==0 and (self.release is None or dist.release is None or dist.release>self.release)):
+				return True
+			else:
+				return False
+		elif flags=='GT':
+			if compareVersion(dist.version,self.version)==1 or (compareVersion(dist.version,self.version)==0 and (self.release is None or dist.release is None or dist.release>=self.release)):
+				return True
+			else:
+				return False
+		
+def defaultNoneList():
+	return []
+class EntryMap:
+	def __init__(self):
+		self.provideEntryPackages=defaultdict(defaultNoneList)
+	def registerEntry(self,entry:PackageEntry,package):
+		self.provideEntryPackages[entry.name].append((package,entry))
+	def queryRequires(self,requireName:str,entrys:list):
+		# requireName==entrys[i].name
+		infoList=self.provideEntryPackages[requireName]
+		res=[]
+		for info in infoList:
+			package=info[0]
+			provideEntry=info[1]
+			for entry in entrys:
+				if entry.checkMatch(provideEntry):
+					res.append(package)
+		#print(" "+entry.name)
+		#for r in res:
+			#print("  "+r[0].fullName)
+		if len(res)!=1:
+			if len(res)==0:
+				#log.warning("no package provide the require file: "+entry.name)
+				return None
+			else:
+				res2=[]
+				for r in res:
+					if r.status=='installed':
+						res2.append(r)
+				if len(res2)==1:
+					return res2[0]
+				name=res[0].packageInfo.name
+				version=res[0].packageInfo.version
+				res2=res[0]
+				for r in res[1:]:
+					if(name!=r.packageInfo.name):
+						log.warning("failed to decide require package for: "+entry.name)
+						for r1 in res:
+							log.info(" one of provider is: "+r1.fullName)
+						return res2
+					if compareVersion(version,r.packageInfo.version)==-1:
+						version=r.packageInfo.version
+						res2=r
+				return res2
+		#TODO:check res[0][1] is match
+		return res[0]
+def defaultCVEList():
+	return 0
+class Counter:
+	def __init__(self):
+		self.cnt=0
+	def getId(self)->int:
+		self.cnt+=1
+		return self.cnt
+class TargetCVE:
+	def __init__(self):
+		self.packageCVE=defaultdict(defaultCVEList)
+		self.packages=[]
+	def addCVE(self,cve,num):
+		self.packageCVE[cve]+=num
+	def registerPackage(self,package):
+		self.packages.append(package)
+class SpecificPackage:
+	def __init__(self,packageInfo:PackageInfo,fullName:str,provides:list,requires:list,arch:str,status="uninstalled",repoURL=None,fileName=""):
+		self.packageInfo=packageInfo
+		self.fullName=fullName
+		self.targetCVE=None
+		self.providesInfo=provides
+		self.requiresInfo=requires
+		self.status=status
+		self.arch=arch
+		self.providesPointers=[]
+		self.requirePointers=[]
+		self.visId=0
+		self.registerProvided=False
+		self.repoURL=repoURL
+		self.fileName=fileName
+		self.dfn=0
+	def addProvidesPointer(self,package):
+		#无需手动调用，addRequirePointer自动处理
+		self.providesPointers.append(package)
+	def addRequirePointer(self,package):
+		self.requirePointers.append(package)
+		package.addProvidesPointer(self)
+	def registerProvides(self,entryMap:EntryMap)->None:
+		if self.registerProvided is True:
+			return
+		self.registerProvided=True
+		for provide in self.providesInfo:
+			entryMap.registerEntry(provide,self)
+	def findRequires(self,entryMap:EntryMap)->None:
+		requirePackageSet=set()
+		requires=dict()
+		for require in self.requiresInfo:
+			if require.name not in requires:
+				requires[require.name]=[]
+			requires[require.name].append(require)
+		for requireName,requireList in requires.items():
+			res=entryMap.queryRequires(requireName,requireList)
+			if res is not None and res not in requirePackageSet:
+				self.addRequirePointer(res)
+				requirePackageSet.add(res)
+	def getPackageCVE(self)->None:
+		#cves=queryPackageCVE(self.packageInfo)
+		#log.info("parse "+self.packageInfo.name+" , has cve:"+str(cves))
+		log.info("need to get cve of: "+self.fullName)
+		return
+		for cve in cves:
+			self.targetCVE.addCVE(cve,1)
+	def getAllCVE(self,requirePackageList:list,id:int,stack=[])->None:
+		log.info("parse:"+self.fullName)
+		log.debug(" stack"+str(stack))
+		for require in self.requirePointers:
+			log.trace(" require: "+require.fullName)
+		#if self.checking is True:
+		#	log.warning("DAG may not promised, multiple visit: "+self.fullName)
+		if self.visId==id:
+			return
+		#self.checking=True
+		stack.append(self.fullName)
+		self.visId=id
+		#self.getPackageCVE()
+		requirePackageList.append(self.packageInfo)
+		for require in self.requirePointers:
+			require.getAllCVE(requirePackageList,id)
+			if require.targetCVE==self.targetCVE:
+				continue
+			for cve,num in require.targetCVE.packageCVE.items():
+				self.targetCVE.addCVE(cve,num)
+		#self.checking=False
+		stack.pop()
+	def setTarget(self,targetCVE):
+		self.targetCVE=targetCVE
+		targetCVE.registerPackage(self)
+
+	def tarjan(self,counter:Counter,visStack:list):
+		self.dfn=counter.getId()
+		self.low=self.dfn
+		self.checking=True
+		visStack.append(self)
+		for v in self.requirePointers:
+			if v.dfn==0:
+				v.tarjan(counter,visStack)
+				self.low=min(self.low,v.low)
+			elif v.checking is True:
+				self.low=min(self.low,v.low)
+		if self.dfn==self.low:
+			self.setTarget(TargetCVE())
+			#for debug
+			if visStack[-1]!=self:
+				log.warning("find a loop")
+				for cnt in range(1,len(visStack)+1):
+					log.info(" "+visStack[-cnt].fullName)
+					if visStack[-cnt]==self:
+						break
+
+			while True:
+				assert len(visStack)>0
+				t=visStack[-1]
+				visStack.pop()
+				t.checking=False
+				if t==self:
+					break
+				t.setTarget(self.targetCVE)
+		
