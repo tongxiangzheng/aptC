@@ -1,25 +1,7 @@
 import os
-from loguru import logger as log
-import nwkTools
+
 from SpecificPackage import *
 
-def getDscFile(repoURL,dscFileName):
-	baseURL=repoURL.rsplit('/',3)[0]+"/"
-	log.info("download dsc file :"+dscFileName+" from "+baseURL+dscFileName)
-	try:
-		dscFilePath=nwkTools.downloadFile(baseURL+dscFileName,os.path.join("~",".aptC","repoMetadata","dscFiles",dscFileName.rsplit('/',1)[0]),dscFileName.rsplit('/',1)[1])
-		os.chmod(dscFilePath, 0o744)
-		return dscFilePath
-	except Exception as e:
-		log.warning("download failed")
-		return None
-def parseDscFile(dscFilePath):
-	with open(dscFilePath,"r") as f:
-		data=f.readlines()
-	for info in data:
-		info=info.strip()
-		if info.startswith("Vcs-Git:") or info.startswith("Debian-Vcs-Git:"):
-			return info.split(' ',1)[1]
 
 
 
@@ -89,7 +71,7 @@ def parseDEBItemInfo(item):
         name=item
     return PackageEntry(name,flags,version,release)
 
-def parseDEBPackages(repoInfos,osType,dist,repoURL)->SpecificPackage:
+def parseDEBPackages(repoInfos,osType,dist,repoURL,repoFileManager)->SpecificPackage:
 	fullName=""
 	name=""
 	version=""
@@ -98,15 +80,16 @@ def parseDEBPackages(repoInfos,osType,dist,repoURL)->SpecificPackage:
 	requires=[]
 	arch=""
 	filename=""
+	source=""
 	res=[]
 	for i in range(len(repoInfos)):
-		info=repoInfos[i].decode('UTF-8').strip()
+		info=repoInfos[i].strip()
 		if len(info)==0:
 			if name=="":
 				name=fullName
 			provides.append(PackageEntry(fullName,"EQ",version,release))
-			packageInfo=PackageInfo(osType,dist,name,version,release)
-			res.append(SpecificPackage(packageInfo,fullName,provides,requires,arch,repoURL=repoURL,fileName=filename))
+			packageInfo=PackageInfo(osType,dist,name,version,release,arch)
+			res.append(SpecificPackage(packageInfo,fullName,provides,requires,arch,source,repoURL=repoURL,fileName=filename))
 			fullName=""
 			name=""
 			version=""
@@ -115,10 +98,12 @@ def parseDEBPackages(repoInfos,osType,dist,repoURL)->SpecificPackage:
 			requires=[]
 			arch=""
 			filename=""
+			source=""
 		if info.startswith("Package:"):
 			fullName=info.split(' ',1)[1]
 		if info.startswith("Source:"):
-			name=info.split(' ',1)[1]
+			source=info.split(' ',1)[1]
+			name=info.split(' ',2)[1]
 		if info.startswith("Version:"):
 			version_release=info.split(' ',1)[1].split('-')
 			version=version_release[0]
@@ -137,26 +122,20 @@ def parseDEBPackages(repoInfos,osType,dist,repoURL)->SpecificPackage:
 		if info.startswith("Filename:"):
 			filename=info.split(' ',1)[1]
 	return res
+
 class RepoFileManager:
 	def __init__(self,url,repoPath,osType,dist):
 		self.url=url
 		self.repoPath=repoPath
-		self.packageMap=dict()
+		self.packageMap=defaultdict(defaultNoneList)
 		with open(repoPath,"r") as f:
-			packages=parseDEBPackages(f.readlines(),osType,dist,url)
+			packages=parseDEBPackages(f.readlines(),osType,dist,url,self)
 			for package in packages:
-				self.packageMap[package.fullName]=package
-	def queryPackage(self,name):
-		return self.packageMap[name]
-	def getGitLink(self,name):
-		specPackageInfo=self.queryPackage(name)
-		repoURL=specPackageInfo.repoURL
-		if repoURL is None or specPackageInfo.fileName == "":
-			return None
-		version=specPackageInfo.fileName.rsplit('_',2)[1]
-		dscFileName=specPackageInfo.fileName.rsplit('/',1)[0]+'/'+specPackageInfo.packageInfo.name+'_'+version+".dsc"
-		dscFilePath=getDscFile(repoURL,dscFileName)
-		if dscFilePath is None:
-			return None
-		gitLink=parseDscFile(dscFilePath)
-		return gitLink
+				self.packageMap[package.fullName].append(package)
+	def queryPackage(self,name,version,release):
+		if name in self.packageMap:
+			for specificPackage in self.packageMap[name]:
+				if specificPackage.packageInfo.version==version and specificPackage.packageInfo.release==release:
+					return specificPackage
+		return None
+	

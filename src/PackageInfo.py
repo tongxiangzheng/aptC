@@ -1,10 +1,11 @@
 import json
 class PackageInfo:
-	def __init__(self,osType:str,dist:str,name:str,version:str,release:str):
+	def __init__(self,osType:str,dist:str,name:str,version:str,release:str,arch:str,gitLink=None):
 		self.osType=osType
 		self.dist=dist
 		self.name=name
-		self.gitLink=None
+		self.gitLink=gitLink
+		self.arch=arch
 		id=version.find('p')
 		if id==-1:
 			self.update=None

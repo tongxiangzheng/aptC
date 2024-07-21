@@ -10,7 +10,7 @@ def getSelfDist():
 				return info.strip()[17:]	
 	return ""
 dist=getSelfDist()
-def parseInstallInfo(info:str,sourcesListManager:SourcesListManager.SourcesListManager)->PackageInfo.PackageInfo:
+def parseInstallInfo(info:str,sourcesListManager:SourcesListManager.SourcesListManager)->SpecificPackage.SpecificPackage:
 	info=info.split(' ',2)
 	name=info[1]
 	additionalInfo=info[2][1:-2].split(' ')
@@ -19,11 +19,12 @@ def parseInstallInfo(info:str,sourcesListManager:SourcesListManager.SourcesListM
 	release=None
 	if len(version_release)>1:
 		release=version_release[1]
-	dist=additionalInfo[1].split('/')[1]
-	arch=additionalInfo[-1]
-	sourcesListManager.getGitLink(name,dist,arch)
-	packageInfo=PackageInfo.PackageInfo('Ubuntu',dist,name,version,release)
-	return packageInfo
+	dist=additionalInfo[1].split('/')[1].split(',')[0]
+	arch=additionalInfo[-1][1:-1]
+	#packageInfo=PackageInfo.PackageInfo('Ubuntu',dist,name,version,release,arch)
+	specificPackage=sourcesListManager.getSpecificPackage(name,dist,version,release,arch)
+	specificPackage.setGitLink()
+	return specificPackage
 def getNewInstall(packageName:str,options,sourcesListManager:SourcesListManager.SourcesListManager):
 	cmd="apt install -s "
 	for option in options:

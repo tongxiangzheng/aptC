@@ -3,13 +3,25 @@ import sys
 import os
 import getNewInstall
 import SourcesListManager
-
+from loguru import logger as log
 def main(command,options,packages):
-	sourcesListManager=SourcesListManager.SourceListManager()
+	sourcesListManager=SourcesListManager.SourcesListManager()
 	packageProvides=dict()
-	for package in packages:
-		packageProvides[package]=getNewInstall.getNewInstall(package,options,sourcesListManager)
-	return True
+	for selectedPackageName in packages:
+		selectedPackage=None
+		willInstallPackages=getNewInstall.getNewInstall(selectedPackageName,options,sourcesListManager)
+		packageProvides[selectedPackageName]=willInstallPackages
+		purls=set()
+		for p in willInstallPackages:
+			purls.add(p.packageInfo.dumpAsPurl())
+			if p.fullName==selectedPackageName:
+				selectedPackage=p
+		purlList=list(purls)
+		if selectedPackage==None:
+			log.warning("cannot find package for "+selectedPackageName)
+		
+
+	return False
 
 
 def core(args):

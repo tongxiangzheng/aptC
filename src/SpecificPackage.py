@@ -1,6 +1,7 @@
 from collections import defaultdict
 from loguru import logger as log
 from PackageInfo import PackageInfo
+import DscParser
 def compareVersion(version1,version2):
 	# -1: version1<version2 0:version1==version2 1:version1>version2
 	v1=version1.split('.')
@@ -115,114 +116,24 @@ class Counter:
 	def getId(self)->int:
 		self.cnt+=1
 		return self.cnt
-class TargetCVE:
-	def __init__(self):
-		self.packageCVE=defaultdict(defaultCVEList)
-		self.packages=[]
-	def addCVE(self,cve,num):
-		self.packageCVE[cve]+=num
-	def registerPackage(self,package):
-		self.packages.append(package)
 class SpecificPackage:
-	def __init__(self,packageInfo:PackageInfo,fullName:str,provides:list,requires:list,arch:str,status="uninstalled",repoURL=None,fileName=""):
+	def __init__(self,packageInfo:PackageInfo,fullName:str,provides:list,requires:list,arch:str,source,status="uninstalled",repoURL=None,fileName=""):
 		self.packageInfo=packageInfo
 		self.fullName=fullName
-		self.targetCVE=None
 		self.providesInfo=provides
 		self.requiresInfo=requires
 		self.status=status
 		self.arch=arch
 		self.providesPointers=[]
 		self.requirePointers=[]
-		self.visId=0
-		self.registerProvided=False
 		self.repoURL=repoURL
 		self.fileName=fileName
-		self.dfn=0
-	def addProvidesPointer(self,package):
-		#无需手动调用，addRequirePointer自动处理
-		self.providesPointers.append(package)
-	def addRequirePointer(self,package):
-		self.requirePointers.append(package)
-		package.addProvidesPointer(self)
-	def registerProvides(self,entryMap:EntryMap)->None:
-		if self.registerProvided is True:
+		self.getGitLinked=False
+		self.source=source
+	
+	def setGitLink(self):
+		if self.getGitLinked is True:
 			return
-		self.registerProvided=True
-		for provide in self.providesInfo:
-			entryMap.registerEntry(provide,self)
-	def findRequires(self,entryMap:EntryMap)->None:
-		requirePackageSet=set()
-		requires=dict()
-		for require in self.requiresInfo:
-			if require.name not in requires:
-				requires[require.name]=[]
-			requires[require.name].append(require)
-		for requireName,requireList in requires.items():
-			res=entryMap.queryRequires(requireName,requireList)
-			if res is not None and res not in requirePackageSet:
-				self.addRequirePointer(res)
-				requirePackageSet.add(res)
-	def getPackageCVE(self)->None:
-		#cves=queryPackageCVE(self.packageInfo)
-		#log.info("parse "+self.packageInfo.name+" , has cve:"+str(cves))
-		log.info("need to get cve of: "+self.fullName)
-		return
-		for cve in cves:
-			self.targetCVE.addCVE(cve,1)
-	def getAllCVE(self,requirePackageList:list,id:int,stack=[])->None:
-		log.info("parse:"+self.fullName)
-		log.debug(" stack"+str(stack))
-		for require in self.requirePointers:
-			log.trace(" require: "+require.fullName)
-		#if self.checking is True:
-		#	log.warning("DAG may not promised, multiple visit: "+self.fullName)
-		if self.visId==id:
-			return
-		#self.checking=True
-		stack.append(self.fullName)
-		self.visId=id
-		#self.getPackageCVE()
-		requirePackageList.append(self.packageInfo)
-		for require in self.requirePointers:
-			require.getAllCVE(requirePackageList,id)
-			if require.targetCVE==self.targetCVE:
-				continue
-			for cve,num in require.targetCVE.packageCVE.items():
-				self.targetCVE.addCVE(cve,num)
-		#self.checking=False
-		stack.pop()
-	def setTarget(self,targetCVE):
-		self.targetCVE=targetCVE
-		targetCVE.registerPackage(self)
-
-	def tarjan(self,counter:Counter,visStack:list):
-		self.dfn=counter.getId()
-		self.low=self.dfn
-		self.checking=True
-		visStack.append(self)
-		for v in self.requirePointers:
-			if v.dfn==0:
-				v.tarjan(counter,visStack)
-				self.low=min(self.low,v.low)
-			elif v.checking is True:
-				self.low=min(self.low,v.low)
-		if self.dfn==self.low:
-			self.setTarget(TargetCVE())
-			#for debug
-			if visStack[-1]!=self:
-				log.warning("find a loop")
-				for cnt in range(1,len(visStack)+1):
-					log.info(" "+visStack[-cnt].fullName)
-					if visStack[-cnt]==self:
-						break
-
-			while True:
-				assert len(visStack)>0
-				t=visStack[-1]
-				visStack.pop()
-				t.checking=False
-				if t==self:
-					break
-				t.setTarget(self.targetCVE)
-		
+		gitLink=DscParser.getGitLink(self)
+		self.getGitLinked=True
+		self.packageInfo.gitLink=gitLink
