@@ -1,3 +1,4 @@
+import os
 import RepoFileManager
 import SpecificPackage
 from loguru import logger as log
@@ -8,45 +9,86 @@ class sourceConfigItem:
 		self.dist=dist
 		self.channel=channel
 		self.repoFiles=dict()
-	def getFilePath(self,arch):
-		return '/var/lib/apt/lists/'+self.url_without_prefix+'_ubuntu_dists_'+self.dist+'_'+self.channel+"_binary-"+arch+"_Packages"
+		with os.popen("dpkg --print-architecture") as f:
+			self.arch=f.read().strip()
+	def getFilePath(self):
+
+		return '/var/lib/apt/lists/'+self.url_without_prefix+'_ubuntu_dists_'+self.dist+'_'+self.channel+"_binary-"+self.arch+"_Packages"
 	def getGitLink(self,name,arch):
 		#abandon
 		log.warning("abandon")
-		repoPath=self.getFilePath(arch)
+		repoPath=self.getFilePath()
 		if repoPath not in self.repoFiles:
 			self.repoFiles[repoPath]=RepoFileManager.RepoFileManager(self.url,repoPath,"ubuntu",self.dist)
 		return self.repoFiles[repoPath].getGitLink(name)
 	def getSpecificPackage(self,name,version,release,arch)->SpecificPackage.SpecificPackage:
-		repoPath=self.getFilePath(arch)
+		repoPath=self.getFilePath()
 		if repoPath not in self.repoFiles:
 			self.repoFiles[repoPath]=RepoFileManager.RepoFileManager(self.url,repoPath,"ubuntu",self.dist)
 		return self.repoFiles[repoPath].queryPackage(name,version,release)
+
+def parseTraditionalSources(data,binaryConfigItems,srcConfigItems):
+	for info in data:
+		info=info.split('#',1)[0].strip()
+		if info.startswith('deb '):
+			item=info.split(' ')
+			url=item[1]
+			dist=item[2]
+			configItems=[]
+			for channel in item[3:]:
+				configItems.append(sourceConfigItem(url,dist,channel))
+			binaryConfigItems[dist]=configItems
+		elif info.startswith('deb-src '):
+			item=info.split(' ')
+			url=item[1]
+			dist=item[2]
+			configItems=[]
+			for channel in item[3:]:
+				configItems.append(sourceConfigItem(url,dist,channel))
+			srcConfigItems[dist]=configItems
+def parseDEB822Sources(data,binaryConfigItems,srcConfigItems):
+	Types=None
+	URIs=None
+	Suites=[]
+	Components=[]
+	for info in data:
+		info=info.split('#',1)[0].strip()
+		if len(info)==0:
+			if Types is None:
+				continue
+			configItems=[]
+			for dist in Suites:
+				for channel in Components:
+					configItems.append(sourceConfigItem(URIs,dist,channel))
+				if Types=='deb':
+					binaryConfigItems[dist]=configItems
+				elif Types=='deb-src':
+					srcConfigItems[dist]=configItems
+		if info.startswith('Types:'):
+			Types=info.split(':',1)[1].strip()
+		if info.startswith('URIs:'):
+			URIs=info.split(':',1)[1].strip()
+		if info.startswith('Suites:'):
+			Suites=info.split(':',1)[1].strip().split(' ')
+		if info.startswith('Components:'):
+			Components=info.split(':',1)[1].strip().split(' ')
+		
+
 class SourcesListManager:
 	def __init__(self):
-		with open('/etc/apt/sources.list') as f:
-			data=f.readlines()
 		self.binaryConfigItems=dict()
 		self.srcConfigItems=dict()
-		for info in data:
-			info=info.split('#',1)[0].strip()
-			if info.startswith('deb '):
-				item=info.split(' ')
-				url=item[1]
-				dist=item[2]
-				configItems=[]
-				for channel in item[3:]:
-					configItems.append(sourceConfigItem(url,dist,channel))
-				self.binaryConfigItems[dist]=configItems
-			elif info.startswith('deb-src '):
-				item=info.split(' ')
-				url=item[1]
-				dist=item[2]
-				configItems=[]
-				for channel in item[3:]:
-					configItems.append(sourceConfigItem(url,dist,channel))
-				self.srcConfigItems[dist]=configItems
-				
+		with open('/etc/apt/sources.list') as f:
+			data=f.readlines()
+			parseTraditionalSources(data,self.binaryConfigItems,self.srcConfigItems)
+		sourcesd='/etc/apt/sources.list.d'
+		for file in os.listdir(sourcesd):
+			filePath=os.path.join(sourcesd, file)
+			if file.endswith('.sources') and os.path.isfile(filePath):
+				with open(filePath) as f:
+					data=f.readlines()
+					parseDEB822Sources(data,self.binaryConfigItems,self.srcConfigItems)
+	
 	def setGitLink(self,name,arch,dist):
 		#abandon
 		log.warning("abandon")

@@ -96,26 +96,26 @@ def parseDEBPackages(repoInfos,osType,dist,repoURL)->SpecificPackage:
 			arch=""
 			filename=""
 		if info.startswith("Package:"):
-			fullName=info.split(' ',1)[1]
+			fullName=info.split(':',1)[1].strip()
 		if info.startswith("Source:"):
-			name=info.split(' ',1)[1]
+			name=info.split(':',1)[1].strip()
 		if info.startswith("Version:"):
-			version_release=info.split(' ',1)[1].split('-')
+			version_release=info.split(':',1)[1].split('-').strip()
 			version=version_release[0]
 			if len(version_release)>1:
 				release=version_release[1]
 		if info.startswith("Architecture:"):
-			arch=info.split(' ',1)[1]
+			arch=info.split(':',1)[1].strip()
 		if info.startswith("Depends:"):
-			depInfos=info.split(' ',1)[1].split("|")
+			depInfos=info.split(':',1)[1].split("|").strip()
 			for depInfo in depInfos:
 				requires.append(parseDEBItemInfo(depInfo))
 		if info.startswith("Provides:"):
-			proInfos=info.split(' ',1)[1].split("|")
+			proInfos=info.split(':',1)[1].split("|").strip()
 			for proInfo in proInfos:
 				provides.append(parseDEBItemInfo(proInfo))
 		if info.startswith("Filename:"):
-			filename=info.split(' ',1)[1]
+			filename=info.split(':',1)[1].strip()
 	return res
 
 

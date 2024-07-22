@@ -1,7 +1,7 @@
 import os
-import PackageInfo
 import SpecificPackage
 import SourcesListManager
+from loguru import logger as log
 def getSelfDist():
 	with open("/etc/os-release") as f:
 		data=f.readlines()
@@ -26,14 +26,18 @@ def parseInstallInfo(info:str,sourcesListManager:SourcesListManager.SourcesListM
 	specificPackage.setGitLink()
 	return specificPackage
 def getNewInstall(packageName:str,options,sourcesListManager:SourcesListManager.SourcesListManager):
-	cmd="apt install -s "
+	cmd="apt-get install -s "
 	for option in options:
 		cmd+=option+' '
 	cmd+=packageName
 	res=[]
+	log.info('cmd is '+cmd)
 	with os.popen(cmd) as f:
 		data=f.readlines()
 		for info in data:
+			if info.startswith('Note, selecting '):
+				pass
+				#TODO: 处理别名
 			if info.startswith('Inst '):
 				res.append(parseInstallInfo(info,sourcesListManager))
 	return res

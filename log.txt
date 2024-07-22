@@ -1,0 +1,2 @@
+docker run --name aptc -v /home/txz/code/aptC:/code -it ubuntu /bin/bash
+docker exec -it aptc /bin/bash

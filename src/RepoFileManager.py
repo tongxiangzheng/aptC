@@ -1,5 +1,7 @@
 import os
 
+import lz4.frame
+
 from SpecificPackage import *
 
 
@@ -128,10 +130,16 @@ class RepoFileManager:
 		self.url=url
 		self.repoPath=repoPath
 		self.packageMap=defaultdict(defaultNoneList)
-		with open(repoPath,"r") as f:
-			packages=parseDEBPackages(f.readlines(),osType,dist,url,self)
-			for package in packages:
-				self.packageMap[package.fullName].append(package)
+		try:
+			with open(repoPath,"r") as f:
+				data=f.readlines()
+		except Exception:
+			with open(repoPath+".lz4","rb") as f:
+				data=f.read()
+				data = lz4.frame.decompress(data).decode().split('\n')
+		packages=parseDEBPackages(data,osType,dist,url,self)
+		for package in packages:
+			self.packageMap[package.fullName].append(package)
 	def queryPackage(self,name,version,release):
 		if name in self.packageMap:
 			for specificPackage in self.packageMap[name]:

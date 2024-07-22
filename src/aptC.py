@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 import sys
 import os
 import getNewInstall
@@ -19,7 +18,9 @@ def main(command,options,packages):
 		purlList=list(purls)
 		if selectedPackage==None:
 			log.warning("cannot find package for "+selectedPackageName)
-		
+		print(selectedPackageName+":")
+		for purl in purlList:
+			print(" "+purl)
 
 	return False
 
@@ -65,6 +66,5 @@ def user_main(args, exit_code=False):
 		sys.exit(errcode)
 	return errcode
 
-
-if __name__ == "__main__":
-	user_main(sys.argv[1:], exit_code=True)
+if __name__ == '__main__':
+	user_main(sys.argv[1:],True)
