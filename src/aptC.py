@@ -40,19 +40,32 @@ def parseCommand(args):
 	command=None
 	options=[]
 	packages=[]
+	needMerge=False
 	for arg in args:
 		if arg.startswith('-'):
-			options.append(arg)
-		else:
-			if command is None:
-				command=arg
+			if needMerge is True:
+				options[-1]+=" "+arg
+				needMerge=False
 			else:
-				packages.append(arg)
+				options.append(arg)
+			if arg=='-o' or arg=='-c' or arg=='-t' or arg=='-a' or arg.endswith('='):
+				needMerge=True
+		else:
+			if arg.startswith('=') or needMerge is True:
+				options[-1]+=" "+arg
+				needMerge=False
+			else:
+				if command is None:
+					command=arg
+				else:
+					packages.append(arg)
+			if arg.endswith('='):
+				needMerge=True
 	return command,options,packages
 def user_main(args, exit_code=False):
 	errcode=None
 	for arg in args:
-		if arg=='-s':
+		if arg=='-s' or arg=="--simulate" or arg=="--just-print" or arg=="--dry-run" or arg=="--recon" or arg=="--no-act":
 			errcode=core(args)
 			break
 	if errcode is None:

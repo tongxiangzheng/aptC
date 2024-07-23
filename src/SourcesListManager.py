@@ -27,7 +27,7 @@ class sourceConfigItem:
 			self.repoFiles[repoPath]=RepoFileManager.RepoFileManager(self.url,repoPath,"ubuntu",self.dist)
 		return self.repoFiles[repoPath].queryPackage(name,version,release)
 
-def parseTraditionalSources(data,binaryConfigItems,srcConfigItems):
+def parseDEBTraditionalSources(data,binaryConfigItems,srcConfigItems):
 	for info in data:
 		info=info.split('#',1)[0].strip()
 		if info.startswith('deb '):
@@ -80,7 +80,7 @@ class SourcesListManager:
 		self.srcConfigItems=dict()
 		with open('/etc/apt/sources.list') as f:
 			data=f.readlines()
-			parseTraditionalSources(data,self.binaryConfigItems,self.srcConfigItems)
+			parseDEBTraditionalSources(data,self.binaryConfigItems,self.srcConfigItems)
 		sourcesd='/etc/apt/sources.list.d'
 		for file in os.listdir(sourcesd):
 			filePath=os.path.join(sourcesd, file)
