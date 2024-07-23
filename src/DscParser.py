@@ -8,8 +8,7 @@ def getDscFile(repoURL,dscFileName):
 		#os.chmod(dscFilePath, 0o744)
 		return dscFilePath
 	except Exception as e:
-		log.info("download failed : dsc file :"+dscFileName+" from "+baseURL+dscFileName)
-	
+		#log.info("download failed : dsc file :"+dscFileName+" from "+baseURL+dscFileName)
 		return None
 def parseDscFile(dscFilePath):
 	with open(dscFilePath,"r") as f:

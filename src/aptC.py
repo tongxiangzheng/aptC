@@ -2,26 +2,27 @@ import sys
 import os
 import getNewInstall
 import SourcesListManager
+import nwkTools
 from loguru import logger as log
+from spdx.spdxmain import spdxmain 
+def downloadPackage(selectedPackage):
+	return nwkTools.downloadFile(selectedPackage.repoURL+'/'+selectedPackage.fileName,'/tmp/aptC/packages',selectedPackage.fileName.rsplit('/',1)[1])
+	
 def main(command,options,packages):
 	sourcesListManager=SourcesListManager.SourcesListManager()
 	packageProvides=dict()
 	for selectedPackageName in packages:
-		selectedPackage=None
-		willInstallPackages=getNewInstall.getNewInstall(selectedPackageName,options,sourcesListManager)
+		selectedPackage,willInstallPackages=getNewInstall.getNewInstall(selectedPackageName,options,sourcesListManager)
+		if selectedPackage is None:
+			continue
+		selectedPackageName=selectedPackage.fullName
 		packageProvides[selectedPackageName]=willInstallPackages
 		purls=set()
 		for p in willInstallPackages:
 			purls.add(p.packageInfo.dumpAsPurl())
-			if p.fullName==selectedPackageName:
-				selectedPackage=p
 		purlList=list(purls)
-		if selectedPackage==None:
-			log.warning("cannot find package for "+selectedPackageName)
-		print(selectedPackageName+":")
-		for purl in purlList:
-			print(" "+purl)
-
+		packageFilePath=downloadPackage(selectedPackage)
+		spdxObject=spdxmain(selectedPackageName,packageFilePath,purlList)
 	return False
 
 

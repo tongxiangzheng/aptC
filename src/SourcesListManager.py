@@ -21,7 +21,7 @@ class sourceConfigItem:
 		if repoPath not in self.repoFiles:
 			self.repoFiles[repoPath]=RepoFileManager.RepoFileManager(self.url,repoPath,"ubuntu",self.dist)
 		return self.repoFiles[repoPath].getGitLink(name)
-	def getSpecificPackage(self,name,version,release,arch)->SpecificPackage.SpecificPackage:
+	def getSpecificPackage(self,name,version,release)->SpecificPackage.SpecificPackage:
 		repoPath=self.getFilePath()
 		if repoPath not in self.repoFiles:
 			self.repoFiles[repoPath]=RepoFileManager.RepoFileManager(self.url,repoPath,"ubuntu",self.dist)
@@ -97,15 +97,15 @@ class SourcesListManager:
 			if res is not None:
 				return res
 		return None
-	def getSpecificPackage(self,name,dist,version,release,arch)->SpecificPackage.SpecificPackage:
+	def getSpecificPackage(self,name,dist,version,release)->SpecificPackage.SpecificPackage:
 		for configItem in self.binaryConfigItems[dist]:
-			specificPackage=configItem.getSpecificPackage(name,version,release,arch)
+			specificPackage=configItem.getSpecificPackage(name,version,release)
 			if specificPackage is not None:
 				return specificPackage
 		return None
-	def getSpecificSrcPackage(self,name,dist,version,release,arch)->SpecificPackage.SpecificPackage:
+	def getSpecificSrcPackage(self,name,dist,version,release)->SpecificPackage.SpecificPackage:
 		for configItem in self.binaryConfigItems[dist]:
-			specificPackage=configItem.getSpecificPackage(name,version,release,arch)
+			specificPackage=configItem.getSpecificPackage(name,version,release)
 			if specificPackage is not None:
 				return specificPackage
 		return None
