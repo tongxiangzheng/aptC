@@ -16,7 +16,7 @@ chmod +x install.sh
 ```
 ### 运行docker:
 ```
-docker start gitChecker
+docker start aptc
 docker exec -it aptc /bin/bash
 ```
 ### 在docker内测试：
