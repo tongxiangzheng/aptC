@@ -34,7 +34,10 @@ def parseDEBTraditionalSources(data,binaryConfigItems,srcConfigItems):
 			item=info.split(' ')
 			url=item[1]
 			dist=item[2]
-			configItems=[]
+			if dist in binaryConfigItems:
+				configItems=binaryConfigItems[dist]
+			else:
+				configItems=[]
 			for channel in item[3:]:
 				configItems.append(sourceConfigItem(url,dist,channel))
 			binaryConfigItems[dist]=configItems
@@ -42,7 +45,10 @@ def parseDEBTraditionalSources(data,binaryConfigItems,srcConfigItems):
 			item=info.split(' ')
 			url=item[1]
 			dist=item[2]
-			configItems=[]
+			if dist in srcConfigItems:
+				configItems=srcConfigItems[dist]
+			else:
+				configItems=[]
 			for channel in item[3:]:
 				configItems.append(sourceConfigItem(url,dist,channel))
 			srcConfigItems[dist]=configItems
@@ -61,9 +67,17 @@ def parseDEB822Sources(data,binaryConfigItems,srcConfigItems):
 				for channel in Components:
 					configItems.append(sourceConfigItem(URIs,dist,channel))
 				if Types=='deb':
-					binaryConfigItems[dist]=configItems
+					if dist in binaryConfigItems:
+						for item in configItems:
+							binaryConfigItems[dist].append(item)
+					else:
+						binaryConfigItems[dist]=configItems
 				elif Types=='deb-src':
-					srcConfigItems[dist]=configItems
+					if dist in srcConfigItems:
+						for item in configItems:
+							srcConfigItems[dist].append(item)
+					else:
+						srcConfigItems[dist]=configItems
 		if info.startswith('Types:'):
 			Types=info.split(':',1)[1].strip()
 		if info.startswith('URIs:'):

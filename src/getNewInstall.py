@@ -13,7 +13,7 @@ dist=getSelfDist()
 def parseInstallInfo(info:str,sourcesListManager:SourcesListManager.SourcesListManager)->SpecificPackage.SpecificPackage:
 	info=info.strip().split(' ',2)
 	name=info[1]
-	additionalInfo=info[2][1:-2].split(' ')
+	additionalInfo=info[2].split(']')[-2].strip()[1:].split(' ')
 	version_release=additionalInfo[0].split('-')
 	version=version_release[0]
 	release=None
@@ -31,7 +31,6 @@ def getInstalledPackageInfo(packageName,sourcesListManager):
 	with os.popen("/usr/bin/apt list --installed") as f:
 		data=f.readlines()
 		tmp=packageName+'/'
-		print(tmp)
 		for info in data:
 			if info.startswith(tmp):
 				dist=info.split(',')[0].split('/')[1]
@@ -40,13 +39,12 @@ def getInstalledPackageInfo(packageName,sourcesListManager):
 				release=None
 				if len(version_release)>1:
 					release=version_release[1]
-				print(packageName,dist,version,release)
 				return sourcesListManager.getSpecificPackage(packageName,dist,version,release)
 	print("error")
 	return None
 
 def getNewInstall(packageName:str,options,sourcesListManager:SourcesListManager.SourcesListManager):
-	cmd="apt-get install -s "
+	cmd="apt-get reinstall -s "
 	for option in options:
 		cmd+=option+' '
 	cmd+=packageName
@@ -69,10 +67,9 @@ def getNewInstall(packageName:str,options,sourcesListManager:SourcesListManager.
 			selectedPackage=p
 	if selectedPackage is None:
 		for p in res:
-			print(p.fullName)
 			for provide in p.providesInfo:
 				if provide.name==packageName:
-					print(provide.name)
 					selectedPackage=p
-	#if selectedPackage is None:
+	if selectedPackage is None:
+		log.warning("unknown error")
 	return selectedPackage,res
