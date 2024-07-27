@@ -18,6 +18,7 @@ for file in src/spdx/*; do
 done
 #/usr/bin/apt -y install python3 python3-pip python3-loguru python3-pycurl python3-certifi python3-wget python3-lz4
 #echo "alias apt='aptc'" > /etc/profile.d/aptc-hook.sh
+#echo "alias apt='aptc'" >> /etc/bash.bashrc
 alias apt='aptc'
 
 

@@ -21,3 +21,8 @@ docker exec -it aptc /bin/bash
 ```
 ### 在docker内测试：
 apt install xxx，此时会执行检查
+
+### 取消安装(test):
+cd /code
+chmod +x uninstall.sh
+./uninstall.sh
