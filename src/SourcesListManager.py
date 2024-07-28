@@ -2,7 +2,7 @@ import os
 import RepoFileManager
 import SpecificPackage
 from loguru import logger as log
-class sourceConfigItem:
+class SourceConfigItem:
 	def __init__(self,url,dist,channel):
 		self.url=url
 		self.url_without_prefix=url.split('//')[1].split('/')[0]
@@ -39,7 +39,7 @@ def parseDEBTraditionalSources(data,binaryConfigItems,srcConfigItems):
 			else:
 				configItems=[]
 			for channel in item[3:]:
-				configItems.append(sourceConfigItem(url,dist,channel))
+				configItems.append(SourceConfigItem(url,dist,channel))
 			binaryConfigItems[dist]=configItems
 		elif info.startswith('deb-src '):
 			item=info.split(' ')
@@ -50,7 +50,7 @@ def parseDEBTraditionalSources(data,binaryConfigItems,srcConfigItems):
 			else:
 				configItems=[]
 			for channel in item[3:]:
-				configItems.append(sourceConfigItem(url,dist,channel))
+				configItems.append(SourceConfigItem(url,dist,channel))
 			srcConfigItems[dist]=configItems
 def parseDEB822Sources(data,binaryConfigItems,srcConfigItems):
 	Types=None
@@ -65,7 +65,7 @@ def parseDEB822Sources(data,binaryConfigItems,srcConfigItems):
 			configItems=[]
 			for dist in Suites:
 				for channel in Components:
-					configItems.append(sourceConfigItem(URIs,dist,channel))
+					configItems.append(SourceConfigItem(URIs,dist,channel))
 				if Types=='deb':
 					if dist in binaryConfigItems:
 						for item in configItems:
@@ -78,6 +78,10 @@ def parseDEB822Sources(data,binaryConfigItems,srcConfigItems):
 							srcConfigItems[dist].append(item)
 					else:
 						srcConfigItems[dist]=configItems
+			Types=None
+			URIs=None
+			Suites=[]
+			Components=[]
 		if info.startswith('Types:'):
 			Types=info.split(':',1)[1].strip()
 		if info.startswith('URIs:'):
@@ -86,7 +90,23 @@ def parseDEB822Sources(data,binaryConfigItems,srcConfigItems):
 			Suites=info.split(':',1)[1].strip().split(' ')
 		if info.startswith('Components:'):
 			Components=info.split(':',1)[1].strip().split(' ')
-		
+	if Types is not None:
+		configItems=[]
+		for dist in Suites:
+			for channel in Components:
+				configItems.append(SourceConfigItem(URIs,dist,channel))
+			if Types=='deb':
+				if dist in binaryConfigItems:
+					for item in configItems:
+						binaryConfigItems[dist].append(item)
+				else:
+					binaryConfigItems[dist]=configItems
+			elif Types=='deb-src':
+				if dist in srcConfigItems:
+					for item in configItems:
+						srcConfigItems[dist].append(item)
+				else:
+					srcConfigItems[dist]=configItems
 
 class SourcesListManager:
 	def __init__(self):
@@ -117,12 +137,12 @@ class SourcesListManager:
 			if specificPackage is not None:
 				return specificPackage
 		return None
-	def getSpecificSrcPackage(self,name,dist,version,release)->SpecificPackage.SpecificPackage:
-		for configItem in self.binaryConfigItems[dist]:
-			specificPackage=configItem.getSpecificPackage(name,version,release)
-			if specificPackage is not None:
-				return specificPackage
-		return None
+	#def getSpecificSrcPackage(self,name,dist,version,release)->SpecificPackage.SpecificPackage:
+	#	for configItem in self.srcConfigItems[dist]:
+	#		specificPackage=configItem.getSpecificPackage(name,version,release)
+	#		if specificPackage is not None:
+	#			return specificPackage
+	#	return None
 	
 	def getBinaryDebPackage(self,packageInfo):
 		pass
