@@ -10,6 +10,7 @@ docker run --name aptc -v <项目位置>:/code -it ubuntu:latest /bin/bash
 /usr/bin/apt update
 /usr/bin/apt -y install python3 python3-pip python3-loguru python3-pycurl python3-certifi python3-wget python3-lz4
 echo "alias apt='aptc'" >> /etc/bash.bashrc
+echo "alias apt-get='apt-getc'" >> /etc/bash.bashrc
 cd /code
 chmod +x install.sh
 ./install.sh

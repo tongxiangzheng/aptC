@@ -27,10 +27,7 @@ def main(command,options,packages):
 
 
 def core(exec,args):
-	if exec.startswith('/'):
-		cmd=exec
-	else:
-		cmd="/usr/bin/"+exec
+	cmd=exec
 	setyes=False
 	for arg in args:
 		cmd+=" "+arg

@@ -33,4 +33,4 @@ suppress_keyboard_interrupt_message()
 
 
 import aptC
-aptC.user_main('apt',sys.argv[1:], exit_code=True)
+aptC.user_main('apt-get',sys.argv[1:], exit_code=True)
