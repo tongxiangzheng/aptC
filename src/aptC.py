@@ -26,8 +26,11 @@ def main(command,options,packages):
 	return False
 
 
-def core(args):
-	cmd="/usr/bin/apt"
+def core(exec,args):
+	if exec.startswith('/'):
+		cmd=exec
+	else:
+		cmd="/usr/bin/"+exec
 	setyes=False
 	for arg in args:
 		cmd+=" "+arg
@@ -36,6 +39,7 @@ def core(args):
 	if setyes is False:
 		cmd+=" -y"
 	return os.system(cmd)
+
 def parseCommand(args):
 	command=None
 	options=[]
@@ -62,11 +66,11 @@ def parseCommand(args):
 			if arg.endswith('='):
 				needMerge=True
 	return command,options,packages
-def user_main(args, exit_code=False):
+def user_main(exec,args, exit_code=False):
 	errcode=None
 	for arg in args:
 		if arg=='-s' or arg=="--simulate" or arg=="--just-print" or arg=="--dry-run" or arg=="--recon" or arg=="--no-act":
-			errcode=core(args)
+			errcode=core(exec,args)
 			break
 	if errcode is None:
 		command,options,packages=parseCommand(args)
@@ -74,11 +78,11 @@ def user_main(args, exit_code=False):
 			if main(command,options,packages) is False:
 				errcode=1
 	if errcode is None:
-		errcode=core(args)
+		errcode=core(exec,args)
 
 	if exit_code:
 		sys.exit(errcode)
 	return errcode
 
-if __name__ == '__main__':
-	user_main(sys.argv[1:],True)
+#if __name__ == '__main__':
+#	user_main(sys.argv[0],sys.argv[1:],True)

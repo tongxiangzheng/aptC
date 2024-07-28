@@ -44,7 +44,7 @@ def getInstalledPackageInfo(packageName,sourcesListManager):
 	return None
 
 def getNewInstall(packageName:str,options,sourcesListManager:SourcesListManager.SourcesListManager):
-	cmd="apt-get reinstall -s "
+	cmd="/usr/bin/apt-get reinstall -s "
 	for option in options:
 		cmd+=option+' '
 	cmd+=packageName
