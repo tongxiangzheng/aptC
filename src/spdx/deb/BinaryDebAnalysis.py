@@ -16,8 +16,13 @@ from collections import defaultdict
 syft_path = '/home/jiliqiang/SCA_Tools/Syft/./syft'
 #针对Deb包进行解压缩
 def extract_deb(deb_path):
+    dir_Path = re.sub(r'\.deb$', '', deb_path)
+    print(dir_Path)
+    # mkdir_command = f'mkdir {dir_Path}'
     #使用命令解压
-    command_extract = f"dpkg -x {deb_path}"
+    command_extract = f"dpkg -x {deb_path} {dir_Path}"
+    os.system(command_extract)
+    return dir_Path
 
 #获取外部依赖
 def getExternalDependenies(scan_path):
@@ -27,13 +32,21 @@ def getExternalDependenies(scan_path):
     dpkg_output_json = json.loads(dpkg_output.decode())
     print(dpkg_output_json)
 #针对二进制的deb包做分析
-def binaryDebScan(scan_path,output_file,ExterDependencies):
+def binaryDebScan(inputPath,output_file,ExterDependencies):
+    #获取外部依赖
+    ExterDependencies=[]
     #获取内部依赖：
+    scan_path = extract_deb(inputPath)
     project_name = scan_path
     # 生成syft普通json
     command_syft = f"{syft_path} scan  {scan_path} -o json"
     syft_output = subprocess.check_output(command_syft, shell=True)
     syft_json = json.loads(syft_output.decode())
+    tempath = scan_path + '-syft.json'
+    with open(tempath, "w") as f:
+        json_string =json.dumps(syft_json,indent=4, separators=(',', ': '))
+        f.write(json_string)
+
     convertSpdx(syft_json, project_name, output_file, ExterDependencies)
 
 # scan_path = "/home/jiliqiang/Deb/deb/libopencensus-java/"

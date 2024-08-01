@@ -18,7 +18,7 @@ def spdxmain(packageName,packageFilePath,purlList):
 	for purl in purlList:
 		print(' '+purl)
 	ExternalDependencies=getExternalDependencies(purlList)
-	BinaryDebAnalysis.binaryDebScan(packageFilePath,packageFilePath+".spdx",ExternalDependencies)
+	BinaryDebAnalysis.binaryDebScan(packageFilePath,packageFilePath+".spdx.json",ExternalDependencies)
 #获取外部依赖
 def getExternalDependencies(purlList):
 	
