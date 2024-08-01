@@ -27,9 +27,7 @@ def getExternalDependenies(scan_path):
     dpkg_output_json = json.loads(dpkg_output.decode())
     print(dpkg_output_json)
 #针对二进制的deb包做分析
-def binaryDebScan(scan_path,output_file):
-    #获取外部依赖
-    ExterDependencies=[]
+def binaryDebScan(scan_path,output_file,ExterDependencies):
     #获取内部依赖：
     project_name = scan_path
     # 生成syft普通json
@@ -41,5 +39,5 @@ def binaryDebScan(scan_path,output_file):
 # scan_path = "/home/jiliqiang/Deb/deb/libopencensus-java/"
 # output_file = "/home/jiliqiang/Deb/deb/spdx_sbom/my_spdx_document.spdx.json"
 #binaryDebScan(scan_path,output_file)
-scan_path = "/home/jiliqiang/Deb/deb/libopencensus-java_0.24.0+ds-1_all.deb"
-getExternalDependenies(scan_path)
+#scan_path = "/home/jiliqiang/Deb/deb/libopencensus-java_0.24.0+ds-1_all.deb"
+#getExternalDependenies(scan_path)
