@@ -3,3 +3,11 @@ pycurl
 certifi
 wget
 lz4
+magic
+packaging
+rarfile
+spdx-tools
+cyclonedx-bom
+cyclonedx-python-lib
+winrar
+numpy

@@ -299,10 +299,10 @@ def Scan(scan_path,output_file,sbomType):
     # #写入json文件
     # with open(output_file,"w") as file:
     #     json.dump(sbom_cyclonedx_json,file)
-sbomType = 'spdx'
+#sbomType = 'spdx'
 # scan_path = '/home/jiliqiang/SCA_Evalutation/efda/java/maven/interpolated-variables'
 # output_file='/home/jiliqiang/SCA_Evalutation/efda/java/maven/sbom_spdx/interpolated-variables.spdx.json'
-scan_path = '/home/jiliqiang/Deb/src/androguard'
-output_file='/home/jiliqiang/Deb/src/spdx_sbom/androguard.spdx.json'
-Scan(scan_path,output_file,sbomType)
+#scan_path = '/home/jiliqiang/Deb/src/androguard'
+#output_file='/home/jiliqiang/Deb/src/spdx_sbom/androguard.spdx.json'
+#Scan(scan_path,output_file,sbomType)
 # findExterDependency(scan_path)

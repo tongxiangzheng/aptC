@@ -1,5 +1,6 @@
 import os
 import sys
+import re
 DIR = os.path.split(os.path.abspath(__file__))[0]
 sys.path.append(os.path.join(DIR,"deb"))
 import BinaryDebAnalysis
@@ -38,10 +39,10 @@ def getExternalDependencies(purlList):
 			version= version
 		)
 		ExternalDependencies.append(Dependency)
-		print("require:",require)
+		#print("require:",require)
 		print("name:",name)
 		print("version",version)
-   
+
 	return ExternalDependencies
 def parse_purl(purl):
 	"""

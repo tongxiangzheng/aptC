@@ -1,7 +1,7 @@
 import zipfile
 import tarfile
 import os
-from Utils.extract import detect_file_type, get_all_supported_compressors, decompress,remove_file_extension
+from spdx.Utils.extract import detect_file_type, get_all_supported_compressors, decompress,remove_file_extension
 def countZip(directory):
     # 获取目录中所有文件列表
     files = os.listdir(directory)

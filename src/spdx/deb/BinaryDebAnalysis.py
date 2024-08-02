@@ -2,15 +2,15 @@ import json
 import os
 import subprocess
 
-from Deb.Unpack import  extract_archive
+from spdx.deb.Unpack import  extract_archive
 import numpy as  np
 
 import os
 import re
 
-from Utils.convertSbom import convertSpdx
-from Utils.extract import remove_file_extension
-from Utils.java.mavenAnalysis import AnalysisVariabele
+from spdx.Utils.convertSbom import convertSpdx
+from spdx.Utils.extract import remove_file_extension
+from spdx.Utils.java.mavenAnalysis import AnalysisVariabele
 from collections import defaultdict
 
 syft_path = '/home/jiliqiang/SCA_Tools/Syft/./syft'
