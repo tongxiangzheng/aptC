@@ -13,7 +13,7 @@ from spdx.Utils.extract import remove_file_extension
 from spdx.Utils.java.mavenAnalysis import AnalysisVariabele
 from collections import defaultdict
 
-syft_path = '/home/jiliqiang/SCA_Tools/Syft/./syft'
+syft_path = '/usr/share/aptC/spdx/syft/syft'
 #针对Deb包进行解压缩
 def extract_deb(deb_path):
     dir_Path = re.sub(r'\.deb$', '', deb_path)

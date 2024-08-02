@@ -13,12 +13,12 @@ class ExternalDependency:
 		self.name = name
 		self.version = version
 		
-def spdxmain(packageName,packageFilePath,purlList):
+def spdxmain(packageName,packageFilePath,dependsList):
 	print("binary deb file at: "+packageFilePath)
 	print("purl for: "+packageName)
-	for purl in purlList:
-		print(' '+purl)
-	ExternalDependencies=getExternalDependencies(purlList)
+	for depends in dependsList:
+		print(depends)
+	ExternalDependencies=getExternalDependencies(dependsList)
 	BinaryDebAnalysis.binaryDebScan(packageFilePath,packageFilePath+".spdx.json",ExternalDependencies)
 #获取外部依赖
 def getExternalDependencies(purlList):

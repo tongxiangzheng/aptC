@@ -17,12 +17,12 @@ def main(command,options,packages):
 			continue
 		selectedPackageName=selectedPackage.fullName
 		packageProvides[selectedPackageName]=willInstallPackages
-		purls=set()
+		depends=dict()
 		for p in willInstallPackages:
-			purls.add(p.packageInfo.dumpAsPurl())
-		purlList=list(purls)
+			depends[p.packageInfo.name+'@'+p.packageInfo.version]=p.packageInfo.dumpAsDict()
+		dependsList=list(depends.values())
 		packageFilePath=downloadPackage(selectedPackage)
-		spdxObject=spdxmain(selectedPackageName,packageFilePath,purlList)
+		spdxObject=spdxmain(selectedPackageName,packageFilePath,dependsList)
 	return False
 
 

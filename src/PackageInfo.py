@@ -22,6 +22,18 @@ class PackageInfo:
 		if self.gitLink is not None:
 			info['gitLink']=self.gitLink
 		return json.dumps(info)
+	def dumpAsDict(self):
+		release=""
+		if self.release is not None:
+			release="-"+self.release
+			if self.update is not None:
+				release+='p'+self.update
+		version=self.version+release
+		info={'name':self.name,'version':version}
+		if self.gitLink is not None:
+			info['gitLink']=self.gitLink
+		return info
+
 	def dumpAsPurl(self):
 		osKind=""
 		if self.osType=='Debian' or self.osType=='Ubuntu':
