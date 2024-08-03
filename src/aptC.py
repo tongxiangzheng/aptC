@@ -5,8 +5,9 @@ import SourcesListManager
 import nwkTools
 from loguru import logger as log
 from spdx.spdxmain import spdxmain 
+import normalize
 def downloadPackage(selectedPackage):
-	return nwkTools.downloadFile(selectedPackage.repoURL+'/'+selectedPackage.fileName,'/tmp/aptC/packages',selectedPackage.fileName.rsplit('/',1)[1])
+	return nwkTools.downloadFile(selectedPackage.repoURL+'/'+selectedPackage.fileName,'/tmp/aptC/packages',normalize.normalReplace(selectedPackage.fileName.rsplit('/',1)[1]))
 	
 def main(command,options,packages):
 	sourcesListManager=SourcesListManager.SourcesListManager()
@@ -22,7 +23,8 @@ def main(command,options,packages):
 			depends[p.packageInfo.name+'@'+p.packageInfo.version]=p.packageInfo.dumpAsDict()
 		dependsList=list(depends.values())
 		packageFilePath=downloadPackage(selectedPackage)
-		spdxObject=spdxmain(selectedPackageName,packageFilePath,dependsList)
+		spdxPath=spdxmain(selectedPackageName,packageFilePath,dependsList)
+		print(spdxPath)
 	return False
 
 

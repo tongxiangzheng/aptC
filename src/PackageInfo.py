@@ -1,4 +1,5 @@
 import json
+import normalize
 class PackageInfo:
 	def __init__(self,osType:str,dist:str,name:str,version:str,release:str,arch:str,gitLink=None):
 		self.osType=osType
@@ -29,7 +30,7 @@ class PackageInfo:
 			if self.update is not None:
 				release+='p'+self.update
 		version=self.version+release
-		info={'name':self.name,'version':version}
+		info={'name':normalize.normalReplace(self.name),'version':normalize.normalReplace(version)}
 		if self.gitLink is not None:
 			info['gitLink']=self.gitLink
 		return info

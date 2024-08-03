@@ -19,21 +19,24 @@ def spdxmain(packageName,packageFilePath,dependsList):
 	for depends in dependsList:
 		print(depends)
 	ExternalDependencies=getExternalDependencies(dependsList)
-	BinaryDebAnalysis.binaryDebScan(packageFilePath,packageFilePath+".spdx.json",ExternalDependencies)
+	resPath=packageFilePath+".spdx.json"
+	BinaryDebAnalysis.binaryDebScan(packageFilePath,resPath,ExternalDependencies)
+	return resPath
+
+
 #获取外部依赖
-def getExternalDependencies(purlList):
+def getExternalDependencies(dependsList):
 	
 	ExternalDependencies = []
 	
 	print("解析")
 	#都是purl链接
-	for purl in purlList:
+	for depends in dependsList:
 		
 		#获取dependency实例数组
 	   
-		purlComponent =  parse_purl(purl)
-		name =purlComponent['name']
-		version =  purlComponent['version']
+		name = depends['name']
+		version = depends['version']
 		Dependency = ExternalDependency(
 			name = name,
 			version= version
