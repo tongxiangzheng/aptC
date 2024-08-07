@@ -34,7 +34,7 @@ def getExternalDependenies(scan_path):
 #针对二进制的deb包做分析
 def binaryDebScan(inputPath,output_file,ExterDependencies):
     #获取外部依赖
-    ExterDependencies=[]
+    
     #获取内部依赖：
     scan_path = extract_deb(inputPath)
     project_name = scan_path
