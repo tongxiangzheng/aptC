@@ -1,0 +1,2461 @@
+Description: <short summary of the patch>
+ TODO: Put a short summary on the line above and replace this paragraph
+ with a longer explanation of this change. Complete the meta-information
+ with other relevant fields (see below for details). To make it easier, the
+ information below has been extracted from the changelog. Adjust it or drop
+ it.
+ .
+ aptc (1.0-1) UNRELEASED; urgency=medium
+ .
+   * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
+Author: unknown <txz@unknown>
+
+---
+The information above should follow the Patch Tagging Guidelines, please
+checkout http://dep.debian.net/deps/dep3/ to learn about the format. Here
+are templates for supplementary fields that you might want to add:
+
+Origin: <vendor|upstream|other>, <url of original patch>
+Bug: <url in upstream bugtracker>
+Bug-Debian: https://bugs.debian.org/<bugnumber>
+Bug-Ubuntu: https://launchpad.net/bugs/<bugnumber>
+Forwarded: <no|not-needed|url proving that it has been forwarded>
+Reviewed-By: <name and email of someone who approved the patch>
+Last-Update: 2024-08-08
+
+--- /dev/null
++++ aptc-1.0/src/spdx/lib/packageurl/__init__.py
+@@ -0,0 +1,549 @@
++# -*- coding: utf-8 -*-
++#
++# Copyright (c) the purl authors
++# SPDX-License-Identifier: MIT
++#
++# Permission is hereby granted, free of charge, to any person obtaining a copy
++# of this software and associated documentation files (the "Software"), to deal
++# in the Software without restriction, including without limitation the rights
++# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
++# copies of the Software, and to permit persons to whom the Software is
++# furnished to do so, subject to the following conditions:
++#
++# The above copyright notice and this permission notice shall be included in all
++# copies or substantial portions of the Software.
++#
++# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
++# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
++# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++# SOFTWARE.
++
++# Visit https://github.com/package-url/packageurl-python for support and
++# download.
++
++import string
++from collections import namedtuple
++from typing import TYPE_CHECKING
++from typing import Any
++from typing import AnyStr
++from typing import Dict
++from typing import Optional
++from typing import Tuple
++from typing import Union
++from typing import overload
++from urllib.parse import quote as _percent_quote
++from urllib.parse import unquote as _percent_unquote
++from urllib.parse import urlsplit as _urlsplit
++
++if TYPE_CHECKING:
++    from collections.abc import Callable
++    from collections.abc import Iterable
++
++    from typing_extensions import Literal
++
++# Python 3
++basestring = (
++    bytes,
++    str,
++)  # NOQA
++
++"""
++A purl (aka. Package URL) implementation as specified at:
++https://github.com/package-url/purl-spec
++"""
++
++
++def quote(s: AnyStr) -> str:
++    """
++    Return a percent-encoded unicode string, except for colon :, given an `s`
++    byte or unicode string.
++    """
++    if isinstance(s, str):
++        s_bytes = s.encode("utf-8")
++    else:
++        s_bytes = s
++    quoted = _percent_quote(s_bytes)
++    if not isinstance(quoted, str):
++        quoted = quoted.decode("utf-8")
++    quoted = quoted.replace("%3A", ":")
++    return quoted
++
++
++def unquote(s: AnyStr) -> str:
++    """
++    Return a percent-decoded unicode string, given an `s` byte or unicode
++    string.
++    """
++    unquoted = _percent_unquote(s)  # type:ignore[arg-type]  # typeshed is incorrect here
++    if not isinstance(unquoted, str):
++        unquoted = unquoted.decode("utf-8")
++    return unquoted
++
++
++@overload
++def get_quoter(encode: bool = True) -> "Callable[[AnyStr], str]": ...
++
++
++@overload
++def get_quoter(encode: None) -> "Callable[[str], str]": ...
++
++
++def get_quoter(
++    encode: Optional[bool] = True,
++) -> "Union[Callable[[AnyStr], str], Callable[[str], str]]":
++    """
++    Return quoting callable given an `encode` tri-boolean (True, False or None)
++    """
++    if encode is True:
++        return quote
++    elif encode is False:
++        return unquote
++    elif encode is None:
++        return lambda x: x
++
++
++def normalize_type(type: Optional[AnyStr], encode: Optional[bool] = True) -> Optional[str]:  # NOQA
++    if not type:
++        return None
++    if not isinstance(type, str):
++        type_str = type.decode("utf-8")  # NOQA
++    else:
++        type_str = type
++
++    quoter = get_quoter(encode)
++    type_str = quoter(type_str)  # NOQA
++    return type_str.strip().lower() or None
++
++
++def normalize_namespace(
++    namespace: Optional[AnyStr], ptype: Optional[str], encode: Optional[bool] = True
++) -> Optional[str]:  # NOQA
++    if not namespace:
++        return None
++    if not isinstance(namespace, str):
++        namespace_str = namespace.decode("utf-8")
++    else:
++        namespace_str = namespace
++
++    namespace_str = namespace_str.strip().strip("/")
++    if ptype in ("bitbucket", "github", "pypi", "gitlab"):
++        namespace_str = namespace_str.lower()
++    segments = [seg for seg in namespace_str.split("/") if seg.strip()]
++    segments_quoted = map(get_quoter(encode), segments)
++    return "/".join(segments_quoted) or None
++
++
++def normalize_name(
++    name: Optional[AnyStr], ptype: Optional[str], encode: Optional[bool] = True
++) -> Optional[str]:  # NOQA
++    if not name:
++        return None
++    if not isinstance(name, str):
++        name_str = name.decode("utf-8")
++    else:
++        name_str = name
++
++    quoter = get_quoter(encode)
++    name_str = quoter(name_str)
++    name_str = name_str.strip().strip("/")
++    if ptype in ("bitbucket", "github", "pypi", "gitlab"):
++        name_str = name_str.lower()
++    if ptype == "pypi":
++        name_str = name_str.replace("_", "-")
++    return name_str or None
++
++
++def normalize_version(
++    version: Optional[AnyStr], encode: Optional[bool] = True
++) -> Optional[str]:  # NOQA
++    if not version:
++        return None
++    if not isinstance(version, str):
++        version_str = version.decode("utf-8")
++    else:
++        version_str = version
++
++    quoter = get_quoter(encode)
++    version_str = quoter(version_str.strip())
++    return version_str or None
++
++
++@overload
++def normalize_qualifiers(
++    qualifiers: Union[AnyStr, Dict[str, str], None], encode: "Literal[True]" = ...
++) -> Optional[str]: ...
++
++
++@overload
++def normalize_qualifiers(
++    qualifiers: Union[AnyStr, Dict[str, str], None], encode: "Optional[Literal[False]]"
++) -> Optional[Dict[str, str]]: ...
++
++
++@overload
++def normalize_qualifiers(
++    qualifiers: Union[AnyStr, Dict[str, str], None], encode: Optional[bool] = ...
++) -> Union[str, Dict[str, str], None]: ...
++
++
++def normalize_qualifiers(
++    qualifiers: Union[AnyStr, Dict[str, str], None], encode: Optional[bool] = True
++) -> Union[str, Dict[str, str], None]:  # NOQA
++    """
++    Return normalized `qualifiers` as a mapping (or as a string if `encode` is
++    True). The `qualifiers` arg is either a mapping or a string.
++    Always return a mapping if decode is True (and never None).
++    Raise ValueError on errors.
++    """
++    if not qualifiers:
++        return None if encode else dict()
++
++    if isinstance(qualifiers, basestring):
++        if not isinstance(qualifiers, str):
++            qualifiers_str = qualifiers.decode("utf-8")
++        else:
++            qualifiers_str = qualifiers
++        # decode string to list of tuples
++        qualifiers_list = qualifiers_str.split("&")
++        if not all("=" in kv for kv in qualifiers_list):
++            raise ValueError(
++                f"Invalid qualifier. Must be a string of key=value pairs:{repr(qualifiers_list)}"
++            )
++        qualifiers_parts = [kv.partition("=") for kv in qualifiers_list]
++        qualifiers_pairs: "Iterable[Tuple[str, str]]" = [(k, v) for k, _, v in qualifiers_parts]
++    elif isinstance(qualifiers, dict):
++        qualifiers_pairs = qualifiers.items()
++    else:
++        raise ValueError(f"Invalid qualifier. Must be a string or dict:{repr(qualifiers)}")
++
++    quoter = get_quoter(encode)
++    qualifiers_map = {
++        k.strip().lower(): quoter(v)
++        for k, v in qualifiers_pairs
++        if k and k.strip() and v and v.strip()
++    }
++
++    valid_chars = string.ascii_letters + string.digits + ".-_"
++    for key in qualifiers_map:
++        if not key:
++            raise ValueError("A qualifier key cannot be empty")
++
++        if "%" in key:
++            raise ValueError(f"A qualifier key cannot be percent encoded: {repr(key)}")
++
++        if " " in key:
++            raise ValueError(f"A qualifier key cannot contain spaces: {repr(key)}")
++
++        if not all(c in valid_chars for c in key):
++            raise ValueError(
++                f"A qualifier key must be composed only of ASCII letters and numbers"
++                f"period, dash and underscore: {repr(key)}"
++            )
++
++        if key[0] in string.digits:
++            raise ValueError(f"A qualifier key cannot start with a number: {repr(key)}")
++
++    qualifiers_map = dict(sorted(qualifiers_map.items()))
++    if encode:
++        qualifiers_list = [f"{key}={value}" for key, value in qualifiers_map.items()]
++        qualifiers_str = "&".join(qualifiers_list)
++        return qualifiers_str or None
++    else:
++        return qualifiers_map
++
++
++def normalize_subpath(
++    subpath: Optional[AnyStr], encode: Optional[bool] = True
++) -> Optional[str]:  # NOQA
++    if not subpath:
++        return None
++    if not isinstance(subpath, str):
++        subpath_str = subpath.decode("utf-8")
++    else:
++        subpath_str = subpath
++
++    quoter = get_quoter(encode)
++    segments = subpath_str.split("/")
++    segments = [quoter(s) for s in segments if s.strip() and s not in (".", "..")]
++    subpath_str = "/".join(segments)
++    return subpath_str or None
++
++
++@overload
++def normalize(
++    type: Optional[AnyStr],
++    namespace: Optional[AnyStr],
++    name: Optional[AnyStr],
++    version: Optional[AnyStr],
++    qualifiers: Union[AnyStr, Dict[str, str], None],
++    subpath: Optional[AnyStr],
++    encode: "Literal[True]" = ...,
++) -> Tuple[str, Optional[str], str, Optional[str], Optional[str], Optional[str]]: ...
++
++
++@overload
++def normalize(
++    type: Optional[AnyStr],
++    namespace: Optional[AnyStr],
++    name: Optional[AnyStr],
++    version: Optional[AnyStr],
++    qualifiers: Union[AnyStr, Dict[str, str], None],
++    subpath: Optional[AnyStr],
++    encode: "Optional[Literal[False]]",
++) -> Tuple[str, Optional[str], str, Optional[str], Optional[Dict[str, str]], Optional[str]]: ...
++
++
++@overload
++def normalize(
++    type: Optional[AnyStr],
++    namespace: Optional[AnyStr],
++    name: Optional[AnyStr],
++    version: Optional[AnyStr],
++    qualifiers: Union[AnyStr, Dict[str, str], None],
++    subpath: Optional[AnyStr],
++    encode: Optional[bool] = ...,
++) -> Tuple[
++    str, Optional[str], str, Optional[str], Union[str, Dict[str, str], None], Optional[str]
++]: ...
++
++
++def normalize(
++    type: Optional[AnyStr],
++    namespace: Optional[AnyStr],
++    name: Optional[AnyStr],
++    version: Optional[AnyStr],
++    qualifiers: Union[AnyStr, Dict[str, str], None],
++    subpath: Optional[AnyStr],
++    encode: Optional[bool] = True,
++) -> Tuple[
++    Optional[str],
++    Optional[str],
++    Optional[str],
++    Optional[str],
++    Union[str, Dict[str, str], None],
++    Optional[str],
++]:  # NOQA
++    """
++    Return normalized purl components
++    """
++    type_norm = normalize_type(type, encode)  # NOQA
++    namespace_norm = normalize_namespace(namespace, type_norm, encode)
++    name_norm = normalize_name(name, type_norm, encode)
++    version_norm = normalize_version(version, encode)
++    qualifiers_norm = normalize_qualifiers(qualifiers, encode)
++    subpath_norm = normalize_subpath(subpath, encode)
++    return type_norm, namespace_norm, name_norm, version_norm, qualifiers_norm, subpath_norm
++
++
++class PackageURL(
++    namedtuple("PackageURL", ("type", "namespace", "name", "version", "qualifiers", "subpath"))
++):
++    """
++    A purl is a package URL as defined at
++    https://github.com/package-url/purl-spec
++    """
++
++    name: str
++    namespace: Optional[str]
++    qualifiers: Union[str, Dict[str, str], None]
++    subpath: Optional[str]
++    type: str
++    version: Optional[str]
++
++    def __new__(
++        self,
++        type: Optional[AnyStr] = None,
++        namespace: Optional[AnyStr] = None,
++        name: Optional[AnyStr] = None,  # NOQA
++        version: Optional[AnyStr] = None,
++        qualifiers: Union[AnyStr, Dict[str, str], None] = None,
++        subpath: Optional[AnyStr] = None,
++    ) -> "PackageURL":  # this should be 'Self' https://github.com/python/mypy/pull/13133
++        required = dict(type=type, name=name)
++        for key, value in required.items():
++            if value:
++                continue
++            raise ValueError(f"Invalid purl: {key} is a required argument.")
++
++        strings = dict(
++            type=type,
++            namespace=namespace,
++            name=name,
++            version=version,
++            subpath=subpath,
++        )
++
++        for key, value in strings.items():
++            if value and isinstance(value, basestring) or not value:
++                continue
++            raise ValueError(f"Invalid purl: {key} argument must be a string: {repr(value)}.")
++
++        if qualifiers and not isinstance(
++            qualifiers,
++            (
++                basestring,
++                dict,
++            ),
++        ):
++            raise ValueError(
++                f"Invalid purl: qualifiers argument must be a dict or a string: {repr(qualifiers)}."
++            )
++
++        (
++            type_norm,
++            namespace_norm,
++            name_norm,
++            version_norm,
++            qualifiers_norm,
++            subpath_norm,
++        ) = normalize(  # NOQA
++            type, namespace, name, version, qualifiers, subpath, encode=None
++        )
++
++        return super().__new__(
++            PackageURL,
++            type=type_norm,
++            namespace=namespace_norm,
++            name=name_norm,
++            version=version_norm,
++            qualifiers=qualifiers_norm,
++            subpath=subpath_norm,
++        )
++
++    def __str__(self, *args: Any, **kwargs: Any) -> str:
++        return self.to_string()
++
++    def __hash__(self) -> int:
++        return hash(self.to_string())
++
++    def to_dict(self, encode: Optional[bool] = False, empty: Any = None) -> Dict[str, Any]:
++        """
++        Return an ordered dict of purl components as {key: value}.
++        If `encode` is True, then "qualifiers" are encoded as a normalized
++        string. Otherwise, qualifiers is a mapping.
++        You can provide a value for `empty` to be used in place of default None.
++        """
++        data = self._asdict()
++        if encode:
++            data["qualifiers"] = normalize_qualifiers(self.qualifiers, encode=encode)
++
++        for field, value in data.items():
++            data[field] = value or empty
++
++        return data
++
++    def to_string(self) -> str:
++        """
++        Return a purl string built from components.
++        """
++        type, namespace, name, version, qualifiers, subpath = normalize(  # NOQA
++            self.type,
++            self.namespace,
++            self.name,
++            self.version,
++            self.qualifiers,
++            self.subpath,
++            encode=True,
++        )
++
++        purl = ["pkg:", type, "/"]
++
++        if namespace:
++            purl.append(namespace)
++            purl.append("/")
++
++        purl.append(name)
++
++        if version:
++            purl.append("@")
++            purl.append(version)
++
++        if qualifiers:
++            purl.append("?")
++            purl.append(qualifiers)
++
++        if subpath:
++            purl.append("#")
++            purl.append(subpath)
++
++        return "".join(purl)
++
++    @classmethod
++    def from_string(cls, purl: str) -> "PackageURL":
++        """
++        Return a PackageURL object parsed from a string.
++        Raise ValueError on errors.
++        """
++        if not purl or not isinstance(purl, str) or not purl.strip():
++            raise ValueError("A purl string argument is required.")
++
++        scheme, sep, remainder = purl.partition(":")
++        if not sep or scheme != "pkg":
++            raise ValueError(f'purl is missing the required "pkg" scheme component: {repr(purl)}.')
++
++        # this strip '/, // and /// as possible in :// or :///
++        remainder = remainder.strip().lstrip("/")
++
++        version: Optional[str]  # this line is just for type hinting
++        subpath: Optional[str]  # this line is just for type hinting
++
++        type, sep, remainder = remainder.partition("/")  # NOQA
++        if not type or not sep:
++            raise ValueError(f"purl is missing the required type component: {repr(purl)}.")
++
++        type = type.lower()
++
++        scheme, authority, path, qualifiers_str, subpath = _urlsplit(
++            url=remainder, scheme="", allow_fragments=True
++        )
++
++        if scheme or authority:
++            msg = (
++                f'Invalid purl {repr(purl)} cannot contain a "user:pass@host:port" '
++                f"URL Authority component: {repr(authority)}."
++            )
++            raise ValueError(msg)
++
++        path = path.lstrip("/")
++
++        namespace: Optional[str] = ""
++        # NPM purl have a namespace in the path
++        # and the namespace in an npm purl is
++        # different from others because it starts with `@`
++        # so we need to handle this case separately
++        if type == "npm" and path.startswith("@"):
++            namespace, sep, path = path.partition("/")
++
++        remainder, sep, version = path.rpartition("@")
++        if not sep:
++            remainder = version
++            version = None
++
++        ns_name = remainder.strip().strip("/")
++        ns_name_parts = ns_name.split("/")
++        ns_name_parts = [seg for seg in ns_name_parts if seg and seg.strip()]
++        name = ""
++        if not namespace and len(ns_name_parts) > 1:
++            name = ns_name_parts[-1]
++            ns = ns_name_parts[0:-1]
++            namespace = "/".join(ns)
++        elif len(ns_name_parts) == 1:
++            name = ns_name_parts[0]
++
++        if not name:
++            raise ValueError(f"purl is missing the required name component: {repr(purl)}")
++
++        type, namespace, name, version, qualifiers, subpath = normalize(  # NOQA
++            type,
++            namespace,
++            name,
++            version,
++            qualifiers_str,
++            subpath,
++            encode=False,
++        )
++
++        return PackageURL(type, namespace, name, version, qualifiers, subpath)
+--- /dev/null
++++ aptc-1.0/src/spdx/lib/packageurl/contrib/django/filters.py
+@@ -0,0 +1,65 @@
++# -*- coding: utf-8 -*-
++#
++# Copyright (c) the purl authors
++# SPDX-License-Identifier: MIT
++#
++# Permission is hereby granted, free of charge, to any person obtaining a copy
++# of this software and associated documentation files (the "Software"), to deal
++# in the Software without restriction, including without limitation the rights
++# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
++# copies of the Software, and to permit persons to whom the Software is
++# furnished to do so, subject to the following conditions:
++#
++# The above copyright notice and this permission notice shall be included in all
++# copies or substantial portions of the Software.
++#
++# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
++# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
++# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++# SOFTWARE.
++
++# Visit https://github.com/package-url/packageurl-python for support and
++# download.
++
++import django_filters
++
++
++class PackageURLFilter(django_filters.CharFilter):
++    """
++    Filter by an exact Package URL string.
++
++    The special "EMPTY" value allows retrieval of objects with an empty Package URL.
++
++    This filter depends on `for_package_url` and `empty_package_url`
++    methods to be available on the Model Manager,
++    see for example `PackageURLQuerySetMixin`.
++
++    When exact_match_only is True, the filter will match only exact Package URL strings.
++    """
++
++    is_empty = "EMPTY"
++    exact_match_only = False
++    help_text = (
++        'Match Package URL. Use "EMPTY" as value to retrieve objects with empty Package URL.'
++    )
++
++    def __init__(self, *args, **kwargs):
++        self.exact_match_only = kwargs.pop("exact_match_only", False)
++        kwargs.setdefault("help_text", self.help_text)
++        super().__init__(*args, **kwargs)
++
++    def filter(self, qs, value):
++        none_values = ([], (), {}, "", None)
++        if value in none_values:
++            return qs
++
++        if self.distinct:
++            qs = qs.distinct()
++
++        if value == self.is_empty:
++            return qs.empty_package_url()
++
++        return qs.for_package_url(value, exact_match=self.exact_match_only)
+--- /dev/null
++++ aptc-1.0/src/spdx/lib/packageurl/contrib/django/models.py
+@@ -0,0 +1,180 @@
++# -*- coding: utf-8 -*-
++#
++# Copyright (c) the purl authors
++# SPDX-License-Identifier: MIT
++#
++# Permission is hereby granted, free of charge, to any person obtaining a copy
++# of this software and associated documentation files (the "Software"), to deal
++# in the Software without restriction, including without limitation the rights
++# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
++# copies of the Software, and to permit persons to whom the Software is
++# furnished to do so, subject to the following conditions:
++#
++# The above copyright notice and this permission notice shall be included in all
++# copies or substantial portions of the Software.
++#
++# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
++# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
++# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++# SOFTWARE.
++
++# Visit https://github.com/package-url/packageurl-python for support and
++# download.
++
++from django.core.exceptions import ValidationError
++from django.db import models
++from django.utils.translation import gettext_lazy as _
++
++from packageurl import PackageURL
++from packageurl.contrib.django.utils import purl_to_lookups
++
++PACKAGE_URL_FIELDS = ("type", "namespace", "name", "version", "qualifiers", "subpath")
++
++
++class PackageURLQuerySetMixin:
++    """
++    Add Package URL filtering methods to a django.db.models.QuerySet.
++    """
++
++    def for_package_url(self, purl_str, encode=True, exact_match=False):
++        """
++        Filter the QuerySet based on a Package URL (purl) string with an option for
++        exact match filtering.
++
++        When `exact_match` is False (default), the method will match any purl with the
++        same base fields as `purl_str` and allow variations in other fields.
++        When `exact_match` is True, only the identical purl will be returned.
++        """
++        lookups = purl_to_lookups(
++            purl_str=purl_str, encode=encode, include_empty_fields=exact_match
++        )
++        if lookups:
++            return self.filter(**lookups)
++        return self.none()
++
++    def with_package_url(self):
++        """Return objects with Package URL defined."""
++        return self.filter(~models.Q(type="") & ~models.Q(name=""))
++
++    def without_package_url(self):
++        """Return objects with empty Package URL."""
++        return self.filter(models.Q(type="") | models.Q(name=""))
++
++    def empty_package_url(self):
++        """Return objects with empty Package URL. Alias of without_package_url."""
++        return self.without_package_url()
++
++    def order_by_package_url(self):
++        """Order by Package URL fields."""
++        return self.order_by(*PACKAGE_URL_FIELDS)
++
++
++class PackageURLQuerySet(PackageURLQuerySetMixin, models.QuerySet):
++    pass
++
++
++class PackageURLMixin(models.Model):
++    """
++    Abstract Model for Package URL "purl" fields support.
++    """
++
++    type = models.CharField(
++        max_length=16,
++        blank=True,
++        help_text=_(
++            "A short code to identify the type of this package. "
++            "For example: gem for a Rubygem, docker for a container, "
++            "pypi for a Python Wheel or Egg, maven for a Maven Jar, "
++            "deb for a Debian package, etc."
++        ),
++    )
++
++    namespace = models.CharField(
++        max_length=255,
++        blank=True,
++        help_text=_(
++            "Package name prefix, such as Maven groupid, Docker image owner, "
++            "GitHub user or organization, etc."
++        ),
++    )
++
++    name = models.CharField(
++        max_length=100,
++        blank=True,
++        help_text=_("Name of the package."),
++    )
++
++    version = models.CharField(
++        max_length=100,
++        blank=True,
++        help_text=_("Version of the package."),
++    )
++
++    qualifiers = models.CharField(
++        max_length=1024,
++        blank=True,
++        help_text=_(
++            "Extra qualifying data for a package such as the name of an OS, "
++            "architecture, distro, etc."
++        ),
++    )
++
++    subpath = models.CharField(
++        max_length=200,
++        blank=True,
++        help_text=_("Extra subpath within a package, relative to the package root."),
++    )
++
++    objects = PackageURLQuerySet.as_manager()
++
++    class Meta:
++        abstract = True
++
++    @property
++    def package_url(self):
++        """
++        Return the Package URL "purl" string.
++        """
++        try:
++            package_url = self.get_package_url()
++        except ValueError:
++            return ""
++
++        return str(package_url)
++
++    def get_package_url(self):
++        """
++        Get the PackageURL instance.
++        """
++        return PackageURL(
++            self.type,
++            self.namespace,
++            self.name,
++            self.version,
++            self.qualifiers,
++            self.subpath,
++        )
++
++    def set_package_url(self, package_url):
++        """
++        Set each field values to the values of the provided `package_url` string
++        or PackageURL object.
++        Existing values are always overwritten, forcing the new value or an
++        empty string on all the `package_url` fields since we do not want to
++        keep any previous values.
++        """
++        if not isinstance(package_url, PackageURL):
++            package_url = PackageURL.from_string(package_url)
++
++        package_url_dict = package_url.to_dict(encode=True, empty="")
++        for field_name, value in package_url_dict.items():
++            model_field = self._meta.get_field(field_name)
++
++            if value and len(value) > model_field.max_length:
++                message = _(f'Value too long for field "{field_name}".')
++                raise ValidationError(message)
++
++            setattr(self, field_name, value)
+--- /dev/null
++++ aptc-1.0/src/spdx/lib/packageurl/contrib/django/utils.py
+@@ -0,0 +1,64 @@
++# -*- coding: utf-8 -*-
++#
++# Copyright (c) the purl authors
++# SPDX-License-Identifier: MIT
++#
++# Permission is hereby granted, free of charge, to any person obtaining a copy
++# of this software and associated documentation files (the "Software"), to deal
++# in the Software without restriction, including without limitation the rights
++# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
++# copies of the Software, and to permit persons to whom the Software is
++# furnished to do so, subject to the following conditions:
++#
++# The above copyright notice and this permission notice shall be included in all
++# copies or substantial portions of the Software.
++#
++# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
++# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
++# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++# SOFTWARE.
++
++# Visit https://github.com/package-url/packageurl-python for support and
++# download.
++
++
++from packageurl import PackageURL
++
++
++def purl_to_lookups(purl_str, encode=True, include_empty_fields=False):
++    """
++    Return a lookups dictionary built from the provided `purl` (Package URL) string.
++    These lookups can be used as QuerySet filters.
++    If include_empty_fields is provided, the resulting dictionary will include fields
++    with empty values. This is useful to get exact match.
++    Note that empty values are always returned as empty strings as the model fields
++    are defined with `blank=True` and `null=False`.
++    """
++    if not purl_str.startswith("pkg:"):
++        purl_str = "pkg:" + purl_str
++
++    try:
++        package_url = PackageURL.from_string(purl_str)
++    except ValueError:
++        return  # Not a valid PackageURL
++
++    package_url_dict = package_url.to_dict(encode=encode, empty="")
++    if include_empty_fields:
++        return package_url_dict
++    else:
++        return without_empty_values(package_url_dict)
++
++
++def without_empty_values(input_dict):
++    """
++    Return a new dict not including empty value entries from `input_dict`.
++
++    `None`, empty string, empty list, and empty dict/set are cleaned.
++    `0` and `False` values are kept.
++    """
++    empty_values = ([], (), {}, "", None)
++
++    return {key: value for key, value in input_dict.items() if value not in empty_values}
+--- /dev/null
++++ aptc-1.0/src/spdx/lib/packageurl/contrib/purl2url.py
+@@ -0,0 +1,420 @@
++# -*- coding: utf-8 -*-
++#
++# Copyright (c) the purl authors
++# SPDX-License-Identifier: MIT
++#
++# Permission is hereby granted, free of charge, to any person obtaining a copy
++# of this software and associated documentation files (the "Software"), to deal
++# in the Software without restriction, including without limitation the rights
++# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
++# copies of the Software, and to permit persons to whom the Software is
++# furnished to do so, subject to the following conditions:
++#
++# The above copyright notice and this permission notice shall be included in all
++# copies or substantial portions of the Software.
++#
++# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
++# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
++# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++# SOFTWARE.
++
++# Visit https://github.com/package-url/packageurl-python for support and
++# download.
++
++from packageurl import PackageURL
++from packageurl.contrib.route import NoRouteAvailable
++from packageurl.contrib.route import Router
++
++
++def get_repo_download_url_by_package_type(
++    type, namespace, name, version, archive_extension="tar.gz"
++):
++    """
++    Return the download URL for a hosted git repository given a package type
++    or None.
++    """
++    if archive_extension not in ("zip", "tar.gz"):
++        raise ValueError("Only zip and tar.gz extensions are supported")
++
++    download_url_by_type = {
++        "github": f"https://github.com/{namespace}/{name}/archive/{version}.{archive_extension}",
++        "bitbucket": f"https://bitbucket.org/{namespace}/{name}/get/{version}.{archive_extension}",
++        "gitlab": f"https://gitlab.com/{namespace}/{name}/-/archive/{version}/{name}-{version}.{archive_extension}",
++    }
++    return download_url_by_type.get(type)
++
++
++repo_router = Router()
++download_router = Router()
++
++
++def _get_url_from_router(router, purl):
++    if purl:
++        try:
++            return router.process(purl)
++        except NoRouteAvailable:
++            return
++
++
++def get_repo_url(purl):
++    """
++    Return a repository URL inferred from the `purl` string.
++    """
++    return _get_url_from_router(repo_router, purl)
++
++
++def get_download_url(purl):
++    """
++    Return a download URL inferred from the `purl` string.
++    """
++    download_url = _get_url_from_router(download_router, purl)
++    if download_url:
++        return download_url
++
++    # Fallback on the `download_url` qualifier when available.
++    purl_data = PackageURL.from_string(purl)
++    return purl_data.qualifiers.get("download_url", None)
++
++
++def get_inferred_urls(purl):
++    """
++    Return all inferred URLs (repo, download) from the `purl` string.
++    """
++    url_functions = (
++        get_repo_url,
++        get_download_url,
++    )
++
++    inferred_urls = []
++    for url_func in url_functions:
++        url = url_func(purl)
++        if url:
++            inferred_urls.append(url)
++
++    return inferred_urls
++
++
++# Backward compatibility
++purl2url = get_repo_url
++get_url = get_repo_url
++
++
++@repo_router.route("pkg:cargo/.*")
++def build_cargo_repo_url(purl):
++    """
++    Return a cargo repo URL from the `purl` string.
++    """
++    purl_data = PackageURL.from_string(purl)
++
++    name = purl_data.name
++    version = purl_data.version
++
++    if name and version:
++        return f"https://crates.io/crates/{name}/{version}"
++    elif name:
++        return f"https://crates.io/crates/{name}"
++
++
++@repo_router.route("pkg:bitbucket/.*")
++def build_bitbucket_repo_url(purl):
++    """
++    Return a bitbucket repo URL from the `purl` string.
++    """
++    purl_data = PackageURL.from_string(purl)
++
++    namespace = purl_data.namespace
++    name = purl_data.name
++
++    if name and namespace:
++        return f"https://bitbucket.org/{namespace}/{name}"
++
++
++@repo_router.route("pkg:github/.*")
++def build_github_repo_url(purl):
++    """
++    Return a github repo URL from the `purl` string.
++    """
++    purl_data = PackageURL.from_string(purl)
++
++    namespace = purl_data.namespace
++    name = purl_data.name
++    version = purl_data.version
++    qualifiers = purl_data.qualifiers
++
++    if not (name and namespace):
++        return
++
++    repo_url = f"https://github.com/{namespace}/{name}"
++
++    if version:
++        version_prefix = qualifiers.get("version_prefix", "")
++        repo_url = f"{repo_url}/tree/{version_prefix}{version}"
++
++    return repo_url
++
++
++@repo_router.route("pkg:gitlab/.*")
++def build_gitlab_repo_url(purl):
++    """
++    Return a gitlab repo URL from the `purl` string.
++    """
++    purl_data = PackageURL.from_string(purl)
++
++    namespace = purl_data.namespace
++    name = purl_data.name
++
++    if name and namespace:
++        return f"https://gitlab.com/{namespace}/{name}"
++
++
++@repo_router.route("pkg:(gem|rubygems)/.*")
++def build_rubygems_repo_url(purl):
++    """
++    Return a rubygems repo URL from the `purl` string.
++    """
++    purl_data = PackageURL.from_string(purl)
++
++    name = purl_data.name
++    version = purl_data.version
++
++    if name and version:
++        return f"https://rubygems.org/gems/{name}/versions/{version}"
++    elif name:
++        return f"https://rubygems.org/gems/{name}"
++
++
++@repo_router.route("pkg:cran/.*")
++def build_cran_repo_url(purl):
++    """
++    Return a cran repo URL from the `purl` string.
++    """
++    purl_data = PackageURL.from_string(purl)
++
++    name = purl_data.name
++    version = purl_data.version
++
++    return f"https://cran.r-project.org/src/contrib/{name}_{version}.tar.gz"
++
++
++@repo_router.route("pkg:npm/.*")
++def build_npm_repo_url(purl):
++    """
++    Return a npm repo URL from the `purl` string.
++    """
++    purl_data = PackageURL.from_string(purl)
++
++    namespace = purl_data.namespace
++    name = purl_data.name
++    version = purl_data.version
++
++    repo_url = "https://www.npmjs.com/package/"
++    if namespace:
++        repo_url += f"{namespace}/"
++
++    repo_url += f"{name}"
++
++    if version:
++        repo_url += f"/v/{version}"
++
++    return repo_url
++
++
++@repo_router.route("pkg:pypi/.*")
++def build_pypi_repo_url(purl):
++    """
++    Return a pypi repo URL from the `purl` string.
++    """
++    purl_data = PackageURL.from_string(purl)
++
++    name = (purl_data.name or "").replace("_", "-")
++    version = purl_data.version
++
++    if name and version:
++        return f"https://pypi.org/project/{name}/{version}/"
++    elif name:
++        return f"https://pypi.org/project/{name}/"
++
++
++@repo_router.route("pkg:composer/.*")
++def build_composer_repo_url(purl):
++    """
++    Return a composer repo URL from the `purl` string.
++    """
++    purl_data = PackageURL.from_string(purl)
++
++    name = purl_data.name
++    version = purl_data.version
++    namespace = purl_data.namespace
++
++    if name and version:
++        return f"https://packagist.org/packages/{namespace}/{name}#{version}"
++    elif name:
++        return f"https://packagist.org/packages/{namespace}/{name}"
++
++
++@repo_router.route("pkg:nuget/.*")
++def build_nuget_repo_url(purl):
++    """
++    Return a nuget repo URL from the `purl` string.
++    """
++    purl_data = PackageURL.from_string(purl)
++
++    name = purl_data.name
++    version = purl_data.version
++
++    if name and version:
++        return f"https://www.nuget.org/packages/{name}/{version}"
++    elif name:
++        return f"https://www.nuget.org/packages/{name}"
++
++
++@repo_router.route("pkg:hackage/.*")
++def build_hackage_repo_url(purl):
++    """
++    Return a hackage repo URL from the `purl` string.
++    """
++    purl_data = PackageURL.from_string(purl)
++
++    name = purl_data.name
++    version = purl_data.version
++
++    if name and version:
++        return f"https://hackage.haskell.org/package/{name}-{version}"
++    elif name:
++        return f"https://hackage.haskell.org/package/{name}"
++
++
++@repo_router.route("pkg:golang/.*")
++def build_golang_repo_url(purl):
++    """
++    Return a golang repo URL from the `purl` string.
++    """
++    purl_data = PackageURL.from_string(purl)
++
++    namespace = purl_data.namespace
++    name = purl_data.name
++    version = purl_data.version
++
++    if name and version:
++        return f"https://pkg.go.dev/{namespace}/{name}@{version}"
++    elif name:
++        return f"https://pkg.go.dev/{namespace}/{name}"
++
++
++# Download URLs:
++
++
++@download_router.route("pkg:cargo/.*")
++def build_cargo_download_url(purl):
++    """
++    Return a cargo download URL from the `purl` string.
++    """
++    purl_data = PackageURL.from_string(purl)
++
++    name = purl_data.name
++    version = purl_data.version
++
++    if name and version:
++        return f"https://crates.io/api/v1/crates/{name}/{version}/download"
++
++
++@download_router.route("pkg:(gem|rubygems)/.*")
++def build_rubygems_download_url(purl):
++    """
++    Return a rubygems download URL from the `purl` string.
++    """
++    purl_data = PackageURL.from_string(purl)
++
++    name = purl_data.name
++    version = purl_data.version
++
++    if name and version:
++        return f"https://rubygems.org/downloads/{name}-{version}.gem"
++
++
++@download_router.route("pkg:npm/.*")
++def build_npm_download_url(purl):
++    """
++    Return a npm download URL from the `purl` string.
++    """
++    purl_data = PackageURL.from_string(purl)
++
++    namespace = purl_data.namespace
++    name = purl_data.name
++    version = purl_data.version
++
++    base_url = "https://registry.npmjs.org"
++
++    if namespace:
++        base_url += f"/{namespace}"
++
++    if name and version:
++        return f"{base_url}/{name}/-/{name}-{version}.tgz"
++
++
++@download_router.route("pkg:hackage/.*")
++def build_hackage_download_url(purl):
++    """
++    Return a hackage download URL from the `purl` string.
++    """
++    purl_data = PackageURL.from_string(purl)
++
++    name = purl_data.name
++    version = purl_data.version
++
++    if name and version:
++        return f"https://hackage.haskell.org/package/{name}-{version}/{name}-{version}.tar.gz"
++
++
++@download_router.route("pkg:nuget/.*")
++def build_nuget_download_url(purl):
++    """
++    Return a nuget download URL from the `purl` string.
++    """
++    purl_data = PackageURL.from_string(purl)
++
++    name = purl_data.name
++    version = purl_data.version
++
++    if name and version:
++        return f"https://www.nuget.org/api/v2/package/{name}/{version}"
++
++
++@download_router.route("pkg:gitlab/.*", "pkg:bitbucket/.*", "pkg:github/.*")
++def build_repo_download_url(purl):
++    """
++    Return a gitlab download URL from the `purl` string.
++    """
++    return get_repo_download_url(purl)
++
++
++def get_repo_download_url(purl):
++    """
++    Return ``download_url`` if present in ``purl`` qualifiers or
++    if ``namespace``, ``name`` and ``version`` are present in ``purl``
++    else return None.
++    """
++    purl_data = PackageURL.from_string(purl)
++
++    namespace = purl_data.namespace
++    type = purl_data.type
++    name = purl_data.name
++    version = purl_data.version
++    qualifiers = purl_data.qualifiers
++
++    download_url = qualifiers.get("download_url")
++    if download_url:
++        return download_url
++
++    if not (namespace and name and version):
++        return
++
++    version_prefix = qualifiers.get("version_prefix", "")
++    version = f"{version_prefix}{version}"
++
++    return get_repo_download_url_by_package_type(
++        type=type, namespace=namespace, name=name, version=version
++    )
+--- /dev/null
++++ aptc-1.0/src/spdx/lib/packageurl/contrib/route.py
+@@ -0,0 +1,224 @@
++# -*- coding: utf-8 -*-
++#
++# Copyright (c) the purl authors
++# SPDX-License-Identifier: MIT
++
++# Permission is hereby granted, free of charge, to any person obtaining a copy
++# of this software and associated documentation files (the "Software"), to deal
++# in the Software without restriction, including without limitation the rights
++# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
++# copies of the Software, and to permit persons to whom the Software is
++# furnished to do so, subject to the following conditions:
++#
++# The above copyright notice and this permission notice shall be included in all
++# copies or substantial portions of the Software.
++#
++# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
++# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
++# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++# SOFTWARE.
++
++# Visit https://github.com/package-url/packageurl-python for support and
++# download.
++
++import inspect
++import re
++from functools import wraps
++
++"""
++Given a URI regex (or some string), this module can route execution to a
++callable.
++
++There are several routing implementations available in Rails, Django, Flask,
++Paste, etc. However, these all assume that the routed processing is to craft a
++response to an incoming external HTTP request.
++
++Here we are instead doing the opposite: given a URI (and no request yet) we are
++routing the processing to emit a request externally (HTTP or other protocol)
++and handling its response.
++
++Also we crawl a lot and not only HTTP: git, svn, ftp, rsync and more.
++This simple library support this kind of arbitrary URI routing.
++
++This is inspired by Guido's http://www.artima.com/weblogs/viewpost.jsp?thread=101605
++and Django, Flask, Werkzeug and other url dispatch and routing design from web
++frameworks.
++https://github.com/douban/brownant has a similar approach, using
++Werkzeug with the limitation that it does not route based on URI scheme and is
++limited to HTTP.
++"""
++
++
++class Rule(object):
++    """
++    A rule is a mapping between a pattern (typically a URI) and a callable
++    (typically a function).
++    The pattern is a regex string pattern and must match entirely a string
++    (typically a URI) for the rule to be considered, i.e. for the endpoint to
++    be resolved and eventually invoked for a given string (typically a URI).
++    """
++
++    def __init__(self, pattern, endpoint):
++        # To ensure the pattern will match entirely, we wrap the pattern
++        # with start of line ^ and  end of line $.
++        self.pattern = pattern.lstrip("^").rstrip("$")
++        self.pattern_match = re.compile("^" + self.pattern + "$").match
++
++        # ensure the endpoint is callable
++        assert callable(endpoint)
++        # classes are not always callable, make an extra check
++        if inspect.isclass(endpoint):
++            obj = endpoint()
++            assert callable(obj)
++
++        self.endpoint = endpoint
++
++    def __repr__(self):
++        return f'Rule(r"""{self.pattern}""", {self.endpoint.__module__}.{self.endpoint.__name__})'
++
++    def match(self, string):
++        """
++        Match a string with the rule pattern, return True is matching.
++        """
++        return self.pattern_match(string)
++
++
++class RouteAlreadyDefined(TypeError):
++    """
++    Raised when this route Rule already exists in the route map.
++    """
++
++
++class NoRouteAvailable(TypeError):
++    """
++    Raised when there are no route available.
++    """
++
++
++class MultipleRoutesDefined(TypeError):
++    """
++    Raised when there are more than one route possible.
++    """
++
++
++class Router(object):
++    """
++    A router is:
++    - a container for a route map, consisting of several rules, stored in an
++     ordered dictionary keyed by pattern text
++    - a way to process a route, i.e. given a string (typically a URI), find the
++     correct rule and invoke its callable endpoint
++    - and a convenience decorator for routed callables (either a function or
++     something with a __call__ method)
++
++    Multiple routers can co-exist as needed, such as a router to collect,
++    another to fetch, etc.
++    """
++
++    def __init__(self, route_map=None):
++        """
++        'route_map' is an ordered mapping of pattern -> Rule.
++        """
++        self.route_map = route_map or dict()
++        # lazy cached pre-compiled regex match() for all route patterns
++        self._is_routable = None
++
++    def __repr__(self):
++        return repr(self.route_map)
++
++    def __iter__(self):
++        return iter(self.route_map.items())
++
++    def keys(self):
++        return self.route_map.keys()
++
++    def append(self, pattern, endpoint):
++        """
++        Append a new pattern and endpoint Rule at the end of the map.
++        Use this as an alternative to the route decorator.
++        """
++        if pattern in self.route_map:
++            raise RouteAlreadyDefined(pattern)
++        self.route_map[pattern] = Rule(pattern, endpoint)
++
++    def route(self, *patterns):
++        """
++        Decorator to make a callable 'endpoint' routed to one or more patterns.
++
++        Example:
++        >>> my_router = Router()
++        >>> @my_router.route('http://nexb.com', 'http://deja.com')
++        ... def somefunc(uri):
++        ...    pass
++        """
++
++        def decorator(endpoint):
++            assert patterns
++            for pat in patterns:
++                self.append(pat, endpoint)
++
++            @wraps(endpoint)
++            def decorated(*args, **kwargs):
++                return self.process(*args, **kwargs)
++
++            return decorated
++
++        return decorator
++
++    def process(self, string, *args, **kwargs):
++        """
++        Given a string (typically a URI), resolve this string to an endpoint
++        by searching available rules then execute the endpoint callable for
++        that string passing down all arguments to the endpoint invocation.
++        """
++        endpoint = self.resolve(string)
++        if inspect.isclass(endpoint):
++            # instantiate a class, that must define a __call__ method
++            # TODO: consider passing args to the constructor?
++            endpoint = endpoint()
++        # call the callable
++        return endpoint(string, *args, **kwargs)
++
++    def resolve(self, string):
++        """
++        Resolve a string: given a string (typically a URI) resolve and
++        return the best endpoint function for that string.
++
++        Ambiguous resolution is not allowed in order to keep things in
++        check when there are hundreds rules: if multiple routes are
++        possible for a string (typically a URI), a MultipleRoutesDefined
++        TypeError is raised.
++        """
++        # TODO: we could improve the performance of this by using a single
++        # regex and named groups if this ever becomes a bottleneck.
++        candidates = [r for r in self.route_map.values() if r.match(string)]
++
++        if not candidates:
++            raise NoRouteAvailable(string)
++
++        if len(candidates) > 1:
++            # this can happen when multiple patterns match the same string
++            # we raise an exception with enough debugging information
++            pats = repr([r.pattern for r in candidates])
++            msg = "%(string)r matches multiple patterns %(pats)r" % locals()
++            raise MultipleRoutesDefined(msg)
++
++        return candidates[0].endpoint
++
++    def is_routable(self, string):
++        """
++        Return True if `string` is routable by this router, e.g. if it
++        matches any of the route patterns.
++        """
++        if not string:
++            return
++
++        if not self._is_routable:
++            # build an alternation regex
++            routables = "^(" + "|".join(pat for pat in self.route_map) + ")$"
++            self._is_routable = re.compile(routables, re.UNICODE).match
++
++        return bool(self._is_routable(string))
+--- /dev/null
++++ aptc-1.0/src/spdx/lib/packageurl/contrib/sqlalchemy/mixin.py
+@@ -0,0 +1,123 @@
++# -*- coding: utf-8 -*-
++#
++# Copyright (c) the purl authors
++# SPDX-License-Identifier: MIT
++#
++# Permission is hereby granted, free of charge, to any person obtaining a copy
++# of this software and associated documentation files (the "Software"), to deal
++# in the Software without restriction, including without limitation the rights
++# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
++# copies of the Software, and to permit persons to whom the Software is
++# furnished to do so, subject to the following conditions:
++#
++# The above copyright notice and this permission notice shall be included in all
++# copies or substantial portions of the Software.
++#
++# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
++# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
++# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++# SOFTWARE.
++
++# Visit https://github.com/package-url/packageurl-python for support and
++# download.
++
++from sqlalchemy import String
++from sqlalchemy.orm import Mapped
++from sqlalchemy.orm import declarative_mixin
++from sqlalchemy.orm import mapped_column
++
++from packageurl import PackageURL
++
++
++@declarative_mixin
++class PackageURLMixin:
++    """
++    SQLAlchemy declarative mixin class for Package URL "purl" fields support.
++    """
++
++    type: Mapped[str] = mapped_column(
++        String(16),
++        nullable=False,
++        comment=(
++            "A short code to identify the type of this package. "
++            "For example: gem for a Rubygem, docker for a container, "
++            "pypi for a Python Wheel or Egg, maven for a Maven Jar, "
++            "deb for a Debian package, etc."
++        ),
++    )
++    namespace: Mapped[str] = mapped_column(
++        String(255),
++        nullable=True,
++        comment=(
++            "Package name prefix, such as Maven groupid, Docker image owner, "
++            "GitHub user or organization, etc."
++        ),
++    )
++    name: Mapped[str] = mapped_column(String(100), nullable=False, comment="Name of the package.")
++    version: Mapped[str] = mapped_column(
++        String(100), nullable=True, comment="Version of the package."
++    )
++    qualifiers: Mapped[str] = mapped_column(
++        String(1024),
++        nullable=True,
++        comment=(
++            "Extra qualifying data for a package such as the name of an OS, "
++            "architecture, distro, etc."
++        ),
++    )
++    subpath: Mapped[str] = mapped_column(
++        String(200),
++        nullable=True,
++        comment="Extra subpath within a package, relative to the package root.",
++    )
++
++    @property
++    def package_url(self) -> str:
++        """
++        Return the Package URL "purl" string.
++
++        Returns
++        -------
++        str
++        """
++        try:
++            package_url = self.get_package_url()
++        except ValueError:
++            return ""
++        return str(package_url)
++
++    def get_package_url(self) -> PackageURL:
++        """
++        Get the PackageURL instance.
++
++        Returns
++        -------
++        PackageURL
++        """
++        return PackageURL(
++            self.type,
++            self.namespace,
++            self.name,
++            self.version,
++            self.qualifiers,
++            self.subpath,
++        )
++
++    def set_package_url(self, package_url: PackageURL) -> None:
++        """
++        Set or update the PackageURL object attributes.
++
++        Parameters
++        ----------
++        package_url: PackageURL
++            The PackageURL object to set get attributes from.
++        """
++        if not isinstance(package_url, PackageURL):
++            package_url = PackageURL.from_string(package_url)
++
++        package_url_dict = package_url.to_dict(encode=True, empty="")
++        for key, value in package_url_dict.items():
++            setattr(self, key, value)
+--- /dev/null
++++ aptc-1.0/src/spdx/lib/packageurl/contrib/url2purl.py
+@@ -0,0 +1,731 @@
++# -*- coding: utf-8 -*-
++#
++# Copyright (c) the purl authors
++# SPDX-License-Identifier: MIT
++#
++# Permission is hereby granted, free of charge, to any person obtaining a copy
++# of this software and associated documentation files (the "Software"), to deal
++# in the Software without restriction, including without limitation the rights
++# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
++# copies of the Software, and to permit persons to whom the Software is
++# furnished to do so, subject to the following conditions:
++#
++# The above copyright notice and this permission notice shall be included in all
++# copies or substantial portions of the Software.
++#
++# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
++# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
++# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++# SOFTWARE.
++
++# Visit https://github.com/package-url/packageurl-python for support and
++# download.
++
++import os
++import re
++from urllib.parse import unquote_plus
++from urllib.parse import urlparse
++
++from packageurl import PackageURL
++from packageurl.contrib.route import NoRouteAvailable
++from packageurl.contrib.route import Router
++
++"""
++This module helps build a PackageURL from an arbitrary URL.
++This uses the a routing mechanism available in the route.py module.
++
++In order to make it easy to use, it contains all the conversion functions
++in this single Python script.
++"""
++
++
++purl_router = Router()
++
++
++def url2purl(url):
++    """
++    Return a PackageURL inferred from the `url` string or None.
++    """
++    if url:
++        try:
++            return purl_router.process(url)
++        except NoRouteAvailable:
++            # If `url` does not fit in one of the existing routes,
++            # we attempt to create a generic PackageURL for `url`
++            return build_generic_purl(url)
++
++
++get_purl = url2purl
++
++
++def purl_from_pattern(type_, pattern, url, qualifiers=None):
++    url = unquote_plus(url)
++    compiled_pattern = re.compile(pattern, re.VERBOSE)
++    match = compiled_pattern.match(url)
++
++    if not match:
++        return
++
++    purl_data = {
++        field: value for field, value in match.groupdict().items() if field in PackageURL._fields
++    }
++
++    qualifiers = qualifiers or {}
++    # Include the `version_prefix` as a qualifier to infer valid URLs in purl2url
++    version_prefix = match.groupdict().get("version_prefix")
++    if version_prefix:
++        qualifiers.update({"version_prefix": version_prefix})
++
++    if qualifiers:
++        if "qualifiers" in purl_data:
++            purl_data["qualifiers"].update(qualifiers)
++        else:
++            purl_data["qualifiers"] = qualifiers
++
++    return PackageURL(type_, **purl_data)
++
++
++def register_pattern(type_, pattern, router=purl_router):
++    """
++    Register a pattern with its type.
++    """
++
++    def endpoint(url):
++        return purl_from_pattern(type_, pattern, url)
++
++    router.append(pattern, endpoint)
++
++
++def get_path_segments(url):
++    """
++    Return a list of path segments from a `url` string.
++    """
++    path = unquote_plus(urlparse(url).path)
++    segments = [seg for seg in path.split("/") if seg]
++    return segments
++
++
++def build_generic_purl(uri):
++    """
++    Return a PackageURL from `uri`, if `uri` is a parsable URL, or None
++
++    `uri` is assumed to be a download URL, e.g. https://example.com/example.tar.gz
++    """
++    parsed_uri = urlparse(uri)
++    if parsed_uri.scheme and parsed_uri.netloc and parsed_uri.path:
++        # Get file name from `uri`
++        uri_path_segments = get_path_segments(uri)
++        if uri_path_segments:
++            file_name = uri_path_segments[-1]
++            return PackageURL(type="generic", name=file_name, qualifiers={"download_url": uri})
++
++
++@purl_router.route(
++    "https?://registry.npmjs.*/.*",
++    "https?://registry.yarnpkg.com/.*",
++    "https?://(www\\.)?npmjs.*/package.*",
++    "https?://(www\\.)?yarnpkg.com/package.*",
++)
++def build_npm_purl(uri):
++    # npm URLs are difficult to disambiguate with regex
++    if "/package/" in uri:
++        return build_npm_web_purl(uri)
++    elif "/-/" in uri:
++        return build_npm_download_purl(uri)
++    else:
++        return build_npm_api_purl(uri)
++
++
++def build_npm_api_purl(uri):
++    path = unquote_plus(urlparse(uri).path)
++    segments = [seg for seg in path.split("/") if seg]
++
++    if len(segments) != 2:
++        return
++
++    # /@invisionag/eslint-config-ivx
++    if segments[0].startswith("@"):
++        namespace = segments[0]
++        name = segments[1]
++        return PackageURL("npm", namespace, name)
++
++    # /angular/1.6.6
++    else:
++        name = segments[0]
++        version = segments[1]
++        return PackageURL("npm", name=name, version=version)
++
++
++def build_npm_download_purl(uri):
++    path = unquote_plus(urlparse(uri).path)
++    segments = [seg for seg in path.split("/") if seg and seg != "-"]
++    len_segments = len(segments)
++
++    # /@invisionag/eslint-config-ivx/-/eslint-config-ivx-0.0.2.tgz
++    if len_segments == 3:
++        namespace, name, filename = segments
++
++    # /automatta/-/automatta-0.0.1.tgz
++    elif len_segments == 2:
++        namespace = None
++        name, filename = segments
++
++    else:
++        return
++
++    base_filename, ext = os.path.splitext(filename)
++    version = base_filename.replace(name, "")
++    if version.startswith("-"):
++        version = version[1:]  # Removes the "-" prefix
++
++    return PackageURL("npm", namespace, name, version)
++
++
++def build_npm_web_purl(uri):
++    path = unquote_plus(urlparse(uri).path)
++    if path.startswith("/package/"):
++        path = path[9:]
++
++    segments = [seg for seg in path.split("/") if seg]
++    len_segments = len(segments)
++    namespace = version = None
++
++    # @angular/cli/v/10.1.2
++    if len_segments == 4:
++        namespace = segments[0]
++        name = segments[1]
++        version = segments[3]
++
++    # express/v/4.17.1
++    elif len_segments == 3:
++        namespace = None
++        name = segments[0]
++        version = segments[2]
++
++    # @angular/cli
++    elif len_segments == 2:
++        namespace = segments[0]
++        name = segments[1]
++
++    # express
++    elif len_segments == 1 and len(segments) > 0 and segments[0][0] != "@":
++        name = segments[0]
++
++    else:
++        return
++
++    return PackageURL("npm", namespace, name, version)
++
++
++@purl_router.route(
++    "https?://repo1.maven.org/maven2/.*",
++    "https?://central.maven.org/maven2/.*",
++    "maven-index://repo1.maven.org/.*",
++)
++def build_maven_purl(uri):
++    path = unquote_plus(urlparse(uri).path)
++    segments = [seg for seg in path.split("/") if seg and seg != "maven2"]
++
++    if len(segments) < 3:
++        return
++
++    before_last_segment, last_segment = segments[-2:]
++    has_filename = before_last_segment in last_segment
++
++    filename = None
++    if has_filename:
++        filename = segments.pop()
++
++    version = segments[-1]
++    name = segments[-2]
++    namespace = ".".join(segments[:-2])
++    qualifiers = {}
++
++    if filename:
++        name_version = f"{name}-{version}"
++        _, _, classifier_ext = filename.rpartition(name_version)
++        classifier, _, extension = classifier_ext.partition(".")
++        if not extension:
++            return
++
++        qualifiers["classifier"] = classifier.strip("-")
++
++        valid_types = ("aar", "ear", "mar", "pom", "rar", "rpm", "sar", "tar.gz", "war", "zip")
++        if extension in valid_types:
++            qualifiers["type"] = extension
++
++    return PackageURL("maven", namespace, name, version, qualifiers)
++
++
++# https://rubygems.org/gems/i18n-js-3.0.11.gem
++@purl_router.route("https?://rubygems.org/(downloads|gems)/.*")
++def build_rubygems_purl(uri):
++    # We use a more general route pattern instead of using `rubygems_pattern`
++    # below by itself because we want to capture all rubygems download URLs,
++    # even the ones that are not completely formed. This helps prevent url2purl
++    # from attempting to create a generic PackageURL from an invalid rubygems
++    # download URL.
++
++    # https://rubygems.org/downloads/jwt-0.1.8.gem
++    # https://rubygems.org/gems/i18n-js-3.0.11.gem
++    rubygems_pattern = (
++        r"^https?://rubygems.org/(downloads|gems)/(?P<name>.+)-(?P<version>.+)(\.gem)$"
++    )
++    return purl_from_pattern("gem", rubygems_pattern, uri)
++
++
++# https://cran.r-project.org/src/contrib/jsonlite_1.8.8.tar.gz
++# https://packagemanager.rstudio.com/cran/2022-06-23/src/contrib/curl_4.3.2.tar.gz"
++@purl_router.route(
++    "https?://cran.r-project.org/.*",
++    "https?://packagemanager.rstudio.com/cran/.*",
++)
++def build_cran_purl(uri):
++    cran_pattern = r"^https?://(cran\.r-project\.org|packagemanager\.rstudio\.com/cran)/.*?src/contrib/(?P<name>.+)_(?P<version>.+)\.tar.gz$"
++    qualifiers = {}
++    if "//cran.r-project.org/" not in uri:
++        qualifiers["download_url"] = uri
++    return purl_from_pattern("cran", cran_pattern, uri, qualifiers)
++
++
++# https://pypi.org/packages/source/a/anyjson/anyjson-0.3.3.tar.gz
++# https://pypi.python.org/packages/source/a/anyjson/anyjson-0.3.3.tar.gz
++# https://pypi.python.org/packages/2.6/t/threadpool/threadpool-1.2.7-py2.6.egg
++# https://pypi.python.org/packages/any/s/setuptools/setuptools-0.6c11-1.src.rpm
++# https://files.pythonhosted.org/packages/84/d8/451842a5496844bb5c7634b231a2e4caf0d867d2e25f09b840d3b07f3d4b/multi_key_dict-2.0.win32.exe
++pypi_pattern = r"(?P<name>(\w\.?)+(-\w+)*)-(?P<version>.+)\.(zip|tar.gz|tar.bz2|tgz|egg|rpm|exe)$"
++
++# This pattern can be found in the following locations:
++# - wheel.wheelfile.WHEEL_INFO_RE
++# - distlib.wheel.FILENAME_RE
++# - setuptools.wheel.WHEEL_NAME
++# - pip._internal.wheel.Wheel.wheel_file_re
++wheel_file_re = re.compile(
++    r"^(?P<namever>(?P<name>.+?)-(?P<version>.*?))"
++    r"((-(?P<build>\d[^-]*?))?-(?P<pyver>.+?)-(?P<abi>.+?)-(?P<plat>.+?)"
++    r"\.whl)$",
++    re.VERBOSE,
++)
++
++
++@purl_router.route(
++    "https?://pypi.org/(packages|project)/.+",
++    "https?://.+python.+org/(packages|project)/.*",
++)
++def build_pypi_purl(uri):
++    path = unquote_plus(urlparse(uri).path)
++    segments = path.split("/")
++    last_segment = segments[-1]
++
++    # /wheel-0.29.0-py2.py3-none-any.whl
++    if last_segment.endswith(".whl"):
++        match = wheel_file_re.match(last_segment)
++        if match:
++            return PackageURL(
++                "pypi",
++                name=match.group("name"),
++                version=match.group("version"),
++            )
++
++    if segments[1] == "project":
++        return PackageURL(
++            "pypi",
++            name=segments[2],
++            version=segments[3] if len(segments) > 3 else None,
++        )
++
++    return purl_from_pattern("pypi", pypi_pattern, last_segment)
++
++
++# https://packagist.org/packages/webmozart/assert#1.9.1
++@purl_router.route("https?://packagist.org/packages/.*")
++def build_composer_purl(uri):
++    # We use a more general route pattern instead of using `composer_pattern`
++    # below by itself because we want to capture all packagist download URLs,
++    # even the ones that are not completely formed. This helps prevent url2purl
++    # from attempting to create a generic PackageURL from an invalid packagist
++    # download URL.
++
++    # https://packagist.org/packages/ralouphie/getallheaders
++    # https://packagist.org/packages/symfony/process#v7.0.0-BETA3
++    composer_pattern = r"^https?://packagist\.org/packages/(?P<namespace>[^/]+)/(?P<name>[^\#]+?)(\#(?P<version>.+))?$"
++    return purl_from_pattern("composer", composer_pattern, uri)
++
++
++# http://nuget.org/packages/EntityFramework/4.2.0.0
++# https://www.nuget.org/api/v2/package/Newtonsoft.Json/11.0.1
++nuget_www_pattern = r"^https?://.*nuget.org/(api/v2/)?packages?/(?P<name>.+)/(?P<version>.+)$"
++
++register_pattern("nuget", nuget_www_pattern)
++
++
++# https://api.nuget.org/v3-flatcontainer/newtonsoft.json/10.0.1/newtonsoft.json.10.0.1.nupkg
++nuget_api_pattern = (
++    r"^https?://api.nuget.org/v3-flatcontainer/"
++    r"(?P<name>.+)/"
++    r"(?P<version>.+)/"
++    r".*(nupkg)$"  # ends with "nupkg"
++)
++
++register_pattern("nuget", nuget_api_pattern)
++
++
++# https://sourceforge.net/projects/turbovnc/files/3.1/turbovnc-3.1.tar.gz/download
++# https://sourceforge.net/projects/scribus/files/scribus/1.6.0/scribus-1.6.0.tar.gz/download
++# https://sourceforge.net/projects/ventoy/files/v1.0.96/Ventoy%201.0.96%20release%20source%20code.tar.gz/download
++# https://sourceforge.net/projects/geoserver/files/GeoServer/2.23.4/geoserver-2.23.4-war.zip/download
++sourceforge_download_pattern = (
++    r"^https?://.*sourceforge.net/projects/"
++    r"(?P<name>.+)/"
++    r"files/"
++    r"(?i:(?P=name)/)?"  # optional case-insensitive name segment repeated
++    r"v?(?P<version>[0-9\.]+)/"  # version restricted to digits and dots
++    r"(?i:(?P=name)).*(?P=version).*"  # case-insensitive matching for {name}-{version}
++    r"(/download)$"  # ending with "/download"
++)
++
++register_pattern("sourceforge", sourceforge_download_pattern)
++
++
++# https://sourceforge.net/projects/spacesniffer/files/spacesniffer_1_3_0_2.zip/download
++sourceforge_download_pattern_bis = (
++    r"^https?://.*sourceforge.net/projects/"
++    r"(?P<name>.+)/"
++    r"files/"
++    r"(?i:(?P=name))_*(?P<version>[0-9_]+).*"
++    r"(/download)$"  # ending with "/download"
++)
++
++register_pattern("sourceforge", sourceforge_download_pattern_bis)
++
++
++@purl_router.route("https?://.*sourceforge.net/project/.*")
++def build_sourceforge_purl(uri):
++    # We use a more general route pattern instead of using `sourceforge_pattern`
++    # below by itself because we want to capture all sourceforge download URLs,
++    # even the ones that do not fit `sourceforge_pattern`. This helps prevent
++    # url2purl from attempting to create a generic PackageURL from a sourceforge
++    # URL that we can't handle.
++
++    # http://master.dl.sourceforge.net/project/libpng/zlib/1.2.3/zlib-1.2.3.tar.bz2
++    sourceforge_pattern = (
++        r"^https?://.*sourceforge.net/projects?/"
++        r"(?P<namespace>([^/]+))/"  # do not allow more "/" segments
++        r"(OldFiles/)?"
++        r"(?P<name>.+)/"
++        r"(?P<version>[v0-9\.]+)/"  # version restricted to digits and dots
++        r"(?P=name).*(?P=version).*"  # {name}-{version} repeated in the filename
++        r"[^/]$"  # not ending with "/"
++    )
++
++    sourceforge_purl = purl_from_pattern("sourceforge", sourceforge_pattern, uri)
++
++    if not sourceforge_purl:
++        # Get the project name from `uri` and use that as the Package name
++        # http://master.dl.sourceforge.net/project/aloyscore/aloyscore/0.1a1%2520stable/0.1a1_stable_AloysCore.zip
++        split_uri = uri.split("/project/")
++
++        # http://master.dl.sourceforge.net, aloyscore/aloyscore/0.1a1%2520stable/0.1a1_stable_AloysCore.zip
++        if len(split_uri) >= 2:
++            # aloyscore/aloyscore/0.1a1%2520stable/0.1a1_stable_AloysCore.zip
++            remaining_uri_path = split_uri[1]
++            # aloyscore, aloyscore, 0.1a1%2520stable, 0.1a1_stable_AloysCore.zip
++            remaining_uri_path_segments = remaining_uri_path.split("/")
++            if remaining_uri_path_segments:
++                project_name = remaining_uri_path_segments[0]  # aloyscore
++                sourceforge_purl = PackageURL(
++                    type="sourceforge", name=project_name, qualifiers={"download_url": uri}
++                )
++    return sourceforge_purl
++
++
++# https://crates.io/api/v1/crates/rand/0.7.2/download
++cargo_pattern = r"^https?://crates.io/api/v1/crates/(?P<name>.+)/(?P<version>.+)(\/download)$"
++
++register_pattern("cargo", cargo_pattern)
++
++
++# https://raw.githubusercontent.com/volatilityfoundation/dwarf2json/master/LICENSE.txt
++github_raw_content_pattern = (
++    r"https?://raw.githubusercontent.com/(?P<namespace>[^/]+)/(?P<name>[^/]+)/"
++    r"(?P<version>[^/]+)/(?P<subpath>.*)$"
++)
++
++register_pattern("github", github_raw_content_pattern)
++
++
++@purl_router.route("https?://api.github\\.com/repos/.*")
++def build_github_api_purl(url):
++    """
++    Return a PackageURL object from GitHub API `url`.
++    For example:
++    https://api.github.com/repos/nexB/scancode-toolkit/commits/40593af0df6c8378d2b180324b97cb439fa11d66
++    https://api.github.com/repos/nexB/scancode-toolkit/
++    and returns a `PackageURL` object
++    """
++    segments = get_path_segments(url)
++
++    if not (len(segments) >= 3):
++        return
++    namespace = segments[1]
++    name = segments[2]
++    version = None
++
++    # https://api.github.com/repos/nexB/scancode-toolkit/
++    if len(segments) == 4 and segments[3] != "commits":
++        version = segments[3]
++
++    # https://api.github.com/repos/nexB/scancode-toolkit/commits/40593af0df6c8378d2b180324b97cb439fa11d66
++    if len(segments) == 5 and segments[3] == "commits":
++        version = segments[4]
++
++    return PackageURL(type="github", namespace=namespace, name=name, version=version)
++
++
++# https://codeload.github.com/nexB/scancode-toolkit/tar.gz/v3.1.1
++# https://codeload.github.com/berngp/grails-rest/zip/release/0.7
++github_codeload_pattern = (
++    r"https?://codeload.github.com/(?P<namespace>.+)/(?P<name>.+)/"
++    r"(zip|tar.gz|tar.bz2|tgz)/(.*/)*"
++    r"(?P<version>.+)$"
++)
++
++register_pattern("github", github_codeload_pattern)
++
++
++@purl_router.route("https?://github\\.com/.*")
++def build_github_purl(url):
++    """
++    Return a PackageURL object from GitHub `url`.
++    """
++
++    # https://github.com/apache/nifi/archive/refs/tags/rel/nifi-2.0.0-M3.tar.gz
++    archive_tags_pattern = (
++        r"https?://github.com/(?P<namespace>.+)/(?P<name>.+)"
++        r"/archive/refs/tags/"
++        r"(?P<version>.+).(zip|tar.gz|tar.bz2|.tgz)"
++    )
++
++    # https://github.com/nexB/scancode-toolkit/archive/v3.1.1.zip
++    archive_pattern = (
++        r"https?://github.com/(?P<namespace>.+)/(?P<name>.+)"
++        r"/archive/(.*/)*"
++        r"((?P=name)(-|_|@))?"
++        r"(?P<version>.+).(zip|tar.gz|tar.bz2|.tgz)"
++    )
++
++    # https://github.com/downloads/mozilla/rhino/rhino1_7R4.zip
++    download_pattern = (
++        r"https?://github.com/downloads/(?P<namespace>.+)/(?P<name>.+)/"
++        r"((?P=name)(-|@)?)?"
++        r"(?P<version>.+).(zip|tar.gz|tar.bz2|.tgz)"
++    )
++
++    # https://github.com/pypa/get-virtualenv/raw/20.0.31/public/virtualenv.pyz
++    raw_pattern = (
++        r"https?://github.com/(?P<namespace>.+)/(?P<name>.+)"
++        r"/raw/(?P<version>[^/]+)/(?P<subpath>.*)$"
++    )
++
++    # https://github.com/fanf2/unifdef/blob/master/unifdef.c
++    blob_pattern = (
++        r"https?://github.com/(?P<namespace>.+)/(?P<name>.+)"
++        r"/blob/(?P<version>[^/]+)/(?P<subpath>.*)$"
++    )
++
++    releases_download_pattern = (
++        r"https?://github.com/(?P<namespace>.+)/(?P<name>.+)"
++        r"/releases/download/(?P<version>[^/]+)/.*$"
++    )
++
++    # https://github.com/pombredanne/schematics.git
++    git_pattern = r"https?://github.com/(?P<namespace>.+)/(?P<name>.+).(git)"
++
++    patterns = (
++        archive_tags_pattern,
++        archive_pattern,
++        raw_pattern,
++        blob_pattern,
++        releases_download_pattern,
++        download_pattern,
++        git_pattern,
++    )
++
++    for pattern in patterns:
++        matches = re.search(pattern, url)
++        qualifiers = {}
++        if matches:
++            if pattern == releases_download_pattern:
++                qualifiers["download_url"] = url
++            return purl_from_pattern(
++                type_="github", pattern=pattern, url=url, qualifiers=qualifiers
++            )
++
++    segments = get_path_segments(url)
++    if not len(segments) >= 2:
++        return
++
++    namespace = segments[0]
++    name = segments[1]
++    version = None
++    subpath = None
++
++    # https://github.com/TG1999/fetchcode/master
++    if len(segments) >= 3 and segments[2] != "tree":
++        version = segments[2]
++        subpath = "/".join(segments[3:])
++
++    # https://github.com/TG1999/fetchcode/tree/master
++    if len(segments) >= 4 and segments[2] == "tree":
++        version = segments[3]
++        subpath = "/".join(segments[4:])
++
++    return PackageURL(
++        type="github",
++        namespace=namespace,
++        name=name,
++        version=version,
++        subpath=subpath,
++    )
++
++
++@purl_router.route("https?://bitbucket\\.org/.*")
++def build_bitbucket_purl(url):
++    """
++    Return a PackageURL object from BitBucket `url`.
++    For example:
++    https://bitbucket.org/TG1999/first_repo/src/master or
++    https://bitbucket.org/TG1999/first_repo/src or
++    https://bitbucket.org/TG1999/first_repo/src/master/new_folder
++    """
++
++    segments = get_path_segments(url)
++
++    if not len(segments) >= 2:
++        return
++    namespace = segments[0]
++    name = segments[1]
++
++    bitbucket_download_pattern = (
++        r"https?://bitbucket.org/"
++        r"(?P<namespace>.+)/(?P<name>.+)/downloads/"
++        r"(?P<version>.+).(zip|tar.gz|tar.bz2|.tgz|exe|msi)"
++    )
++    matches = re.search(bitbucket_download_pattern, url)
++
++    qualifiers = {}
++    if matches:
++        qualifiers["download_url"] = url
++        return PackageURL(type="bitbucket", namespace=namespace, name=name, qualifiers=qualifiers)
++
++    version = None
++    subpath = None
++
++    # https://bitbucket.org/TG1999/first_repo/new_folder/
++    if len(segments) >= 3 and segments[2] != "src":
++        version = segments[2]
++        subpath = "/".join(segments[3:])
++
++    # https://bitbucket.org/TG1999/first_repo/src/master/new_folder/
++    if len(segments) >= 4 and segments[2] == "src":
++        version = segments[3]
++        subpath = "/".join(segments[4:])
++
++    return PackageURL(
++        type="bitbucket",
++        namespace=namespace,
++        name=name,
++        version=version,
++        subpath=subpath,
++    )
++
++
++@purl_router.route("https?://gitlab\\.com/(?!.*/archive/).*")
++def build_gitlab_purl(url):
++    """
++    Return a PackageURL object from Gitlab `url`.
++    For example:
++    https://gitlab.com/TG1999/firebase/-/tree/1a122122/views
++    https://gitlab.com/TG1999/firebase/-/tree
++    https://gitlab.com/TG1999/firebase/-/master
++    https://gitlab.com/tg1999/Firebase/-/tree/master
++    """
++    segments = get_path_segments(url)
++
++    if not len(segments) >= 2:
++        return
++    namespace = segments[0]
++    name = segments[1]
++    version = None
++    subpath = None
++
++    # https://gitlab.com/TG1999/firebase/master
++    if (len(segments) >= 3) and segments[2] != "-" and segments[2] != "tree":
++        version = segments[2]
++        subpath = "/".join(segments[3:])
++
++    # https://gitlab.com/TG1999/firebase/-/tree/master
++    if len(segments) >= 5 and (segments[2] == "-" and segments[3] == "tree"):
++        version = segments[4]
++        subpath = "/".join(segments[5:])
++
++    return PackageURL(
++        type="gitlab",
++        namespace=namespace,
++        name=name,
++        version=version,
++        subpath=subpath,
++    )
++
++
++# https://gitlab.com/hoppr/hoppr/-/archive/v1.11.1-dev.2/hoppr-v1.11.1-dev.2.tar.gz
++gitlab_archive_pattern = (
++    r"^https?://gitlab.com/"
++    r"(?P<namespace>.+)/(?P<name>.+)/-/archive/(?P<version>.+)/"
++    r"(?P=name)-(?P=version).*"
++    r"[^/]$"
++)
++
++register_pattern("gitlab", gitlab_archive_pattern)
++
++
++# https://hackage.haskell.org/package/cli-extras-0.2.0.0/cli-extras-0.2.0.0.tar.gz
++hackage_download_pattern = (
++    r"^https?://hackage.haskell.org/package/"
++    r"(?P<name>.+)-(?P<version>.+)/"
++    r"(?P=name)-(?P=version).*"
++    r"[^/]$"
++)
++
++register_pattern("hackage", hackage_download_pattern)
++
++
++# https://hackage.haskell.org/package/cli-extras-0.2.0.0/
++hackage_project_pattern = r"^https?://hackage.haskell.org/package/(?P<name>.+)-(?P<version>[^/]+)/"
++
++register_pattern("hackage", hackage_project_pattern)
++
++
++@purl_router.route(
++    "https?://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/.*"
++)
++def build_generic_google_code_archive_purl(uri):
++    # https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com
++    # /android-notifier/android-notifier-desktop-0.5.1-1.i386.rpm
++    _, remaining_uri = uri.split(
++        "https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/"
++    )
++    if remaining_uri:  # android-notifier/android-notifier-desktop-0.5.1-1.i386.rpm
++        split_remaining_uri = remaining_uri.split("/")
++        # android-notifier, android-notifier-desktop-0.5.1-1.i386.rpm
++        if split_remaining_uri:
++            name = split_remaining_uri[0]  # android-notifier
++            return PackageURL(
++                type="generic",
++                namespace="code.google.com",
++                name=name,
++                qualifiers={"download_url": uri},
++            )
+--- /dev/null
++++ aptc-1.0/src/spdx/lib/packageurl/utils.py
+@@ -0,0 +1,53 @@
++# -*- coding: utf-8 -*-
++#
++# Copyright (c) the purl authors
++# SPDX-License-Identifier: MIT
++#
++# Permission is hereby granted, free of charge, to any person obtaining a copy
++# of this software and associated documentation files (the "Software"), to deal
++# in the Software without restriction, including without limitation the rights
++# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
++# copies of the Software, and to permit persons to whom the Software is
++# furnished to do so, subject to the following conditions:
++#
++# The above copyright notice and this permission notice shall be included in all
++# copies or substantial portions of the Software.
++#
++# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
++# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
++# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++# SOFTWARE.
++
++# Visit https://github.com/package-url/packageurl-python for support and
++# download.
++
++from packageurl import PackageURL
++
++
++def get_golang_purl(go_package: str):
++    """
++    Return a PackageURL object given an imported ``go_package``
++    or go module "name version" string as seen in a go.mod file.
++    >>> get_golang_purl(go_package="github.com/gorilla/mux v1.8.1")
++    PackageURL(type='golang', namespace='github.com/gorilla', name='mux', version='v1.8.1', qualifiers={}, subpath=None)
++    """
++    if not go_package:
++        return
++    version = None
++    # Go package in *.mod files is represented like this
++    # package version
++    # github.com/gorilla/mux v1.8.1
++    # https://github.com/moby/moby/blob/6c10086976d07d4746e03dcfd188972a2f07e1c9/vendor.mod#L51
++    if "@" in go_package:
++        raise Exception(f"{go_package} should not contain ``@``")
++    if " " in go_package:
++        go_package, _, version = go_package.rpartition(" ")
++    parts = go_package.split("/")
++    if not parts:
++        return
++    name = parts[-1]
++    namespace = "/".join(parts[:-1])
++    return PackageURL(type="golang", namespace=namespace, name=name, version=version)

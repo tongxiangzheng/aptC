@@ -26,7 +26,7 @@ docker exec -it aptc /bin/bash
 ### 在docker内测试：
 apt install xxx，此时会执行检查
 
-### 取消安装(test):
+### 取消安装:
 cd /code
 chmod +x uninstall.sh
 ./uninstall.sh
@@ -35,7 +35,6 @@ chmod +x uninstall.sh
 ```
 sudo apt install -y dh_make
 ```
-
 文件夹改名为aptc-1.0
 在文件夹内：
 ```

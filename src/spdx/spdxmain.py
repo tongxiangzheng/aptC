@@ -40,10 +40,9 @@ def getExternalDependencies(dependsList):
 		name = depends['name']
 		version = depends['version']
 		gitLink = ''
-		try:
+		if 'gitLink' in depends:
 			gitLink = depends['gitLink']
-		except KeyError:
-			print('gitLink field not found in the JSON data')
+		print(gitLink)
 		Dependency = ExternalDependency(
 			name = name,
 			version= version,
