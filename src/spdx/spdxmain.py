@@ -41,7 +41,7 @@ def getExternalDependencies(dependsList):
 		version = depends['version']
 		gitLink = ''
 		if 'gitLink' in depends:
-			gitLink = depends['gitLink']
+			gitLink = str(depends['gitLink'])
 		Dependency = ExternalDependency(
 			name = name,
 			version= version,
