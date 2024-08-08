@@ -8,10 +8,11 @@ import BinaryDebAnalysis
 class ExternalDependency:
 	name:str
 	version:str
-
-	def __init__(self,name,version):
+	gitLink:str
+	def __init__(self,name,version,gitLink):
 		self.name = name
 		self.version = version
+		self.gitLink = gitLink
 		
 def spdxmain(packageName,packageFilePath,dependsList):
 	print("binary deb file at: "+packageFilePath)
@@ -37,14 +38,21 @@ def getExternalDependencies(dependsList):
 	   
 		name = depends['name']
 		version = depends['version']
+		gitLink = ''
+		try:
+			gitLink = depends['gitLink']
+		except KeyError:
+			print('gitLink field not found in the JSON data')
 		Dependency = ExternalDependency(
 			name = name,
-			version= version
+			version= version,
+			gitLink= gitLink
 		)
 		ExternalDependencies.append(Dependency)
 		#print("require:",require)
 		print("name:",name)
 		print("version",version)
+		print('gitLink',gitLink)
 
 	return ExternalDependencies
 def parse_purl(purl):
