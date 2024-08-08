@@ -78,7 +78,7 @@ def convertSpdx(syft_json,project_name,output_file,ExterDependencies):
         spdx_id_externalDependency = f"SPDXRef-Package-Deb---{exterDependency.name}--{uuid.uuid4()}"
         #存储所有外部依赖的spdxid
         spdx_id_externalDependencies.append(spdx_id_externalDependency)
-        gitLink = exterDependency.gitLink,
+        gitLink = str(exterDependency.gitLink),
         package_exterDependency =  Package(
             name=exterDependency.name,
             spdx_id=spdx_id_externalDependency,
