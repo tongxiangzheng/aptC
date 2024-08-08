@@ -6,9 +6,17 @@ import nwkTools
 from loguru import logger as log
 from spdx.spdxmain import spdxmain 
 import normalize
+import json
+import socket
 def downloadPackage(selectedPackage):
 	return nwkTools.downloadFile(selectedPackage.repoURL+'/'+selectedPackage.fileName,'/tmp/aptC/packages',normalize.normalReplace(selectedPackage.fileName.rsplit('/',1)[1]))
-	
+
+def queryCVE(spdxObj):
+	s=socket.socket()
+	s.connect(('host.docker.internal',8342))
+	nwkTools.sendObject(s,spdxObj)
+	res=nwkTools.receiveObject(s)
+	return res
 def main(command,options,packages):
 	sourcesListManager=SourcesListManager.SourcesListManager()
 	packageProvides=dict()
@@ -24,7 +32,10 @@ def main(command,options,packages):
 		dependsList=list(depends.values())
 		packageFilePath=downloadPackage(selectedPackage)
 		spdxPath=spdxmain(selectedPackageName,packageFilePath,dependsList)
-		print(spdxPath)
+		with open(spdxPath,"r") as f:
+			spdxObj=json.load(f)
+			cves=queryCVE(spdxObj)
+			print(cves)
 	return False
 
 

@@ -3,6 +3,7 @@ import sys
 import re
 DIR = os.path.split(os.path.abspath(__file__))[0]
 sys.path.append(os.path.join(DIR,"deb"))
+sys.path.append(os.path.join(DIR,"lib"))
 import BinaryDebAnalysis
 
 class ExternalDependency:
@@ -15,10 +16,10 @@ class ExternalDependency:
 		self.gitLink = gitLink
 		
 def spdxmain(packageName,packageFilePath,dependsList):
-	print("binary deb file at: "+packageFilePath)
-	print("purl for: "+packageName)
-	for depends in dependsList:
-		print(depends)
+	#print("binary deb file at: "+packageFilePath)
+	#print("purl for: "+packageName)
+	#for depends in dependsList:
+	#	print(depends)
 	ExternalDependencies=getExternalDependencies(dependsList)
 	resPath=packageFilePath+".spdx.json"
 	BinaryDebAnalysis.binaryDebScan(packageFilePath,resPath,ExternalDependencies)

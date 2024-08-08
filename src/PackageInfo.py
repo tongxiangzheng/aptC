@@ -87,4 +87,4 @@ def loadPurl(purlStr):
 			ei=extra.split('=')
 			if ei[0]=='gitLink':
 				gitLink=ei[1]
-	PackageInfo(osType,dist,name,version,release,gitLink)
+	return PackageInfo(osType,dist,name,version,release,gitLink)

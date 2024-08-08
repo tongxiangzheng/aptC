@@ -15,5 +15,4 @@ uninstall:
 	-rm -f $(DESTDIR)$(prefix)/bin/aptc
 	-rm -f $(DESTDIR)$(prefix)/bin/apt-getc
 
-
-.PHONY: all install clean distclean uninstall
+.PHONY: all install clean distclean uninstall configure

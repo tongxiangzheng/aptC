@@ -30,3 +30,21 @@ apt install xxx，此时会执行检查
 cd /code
 chmod +x uninstall.sh
 ./uninstall.sh
+
+## 如何打包
+```
+sudo apt install -y dh_make
+```
+
+文件夹改名为aptc-1.0
+在文件夹内：
+```
+dh_make --createorig
+```
+输入i
+输入y，确认
+
+```
+dpkg-buildpackage -us -uc
+```
+
