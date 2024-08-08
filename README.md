@@ -27,10 +27,11 @@ docker exec -it aptc /bin/bash
 apt install xxx，此时会执行检查
 
 ### 取消安装:
+```
 cd /code
 chmod +x uninstall.sh
 ./uninstall.sh
-
+```
 ## 如何打包
 ```
 sudo apt install -y dh_make
