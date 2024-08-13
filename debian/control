@@ -1,10 +1,10 @@
 Source: aptc
 Section: unknown
 Priority: optional
-Maintainer: unknown <txz@unknown>
+Maintainer: txz <920504276@qq.com>
 Build-Depends: debhelper-compat (= 13)
 Standards-Version: 4.6.0
-Homepage: <insert the upstream URL, if relevant>
+#Homepage: <insert the upstream URL, if relevant>
 #Vcs-Browser: https://salsa.debian.org/debian/aptc
 #Vcs-Git: https://salsa.debian.org/debian/aptc.git
 Rules-Requires-Root: no
@@ -27,6 +27,8 @@ Depends: ${misc:Depends},
          python3-xmltodict,
          python3-yaml,
          python3-sortedcontainers,
-         python3-defusedxml
-Description: <insert up to 60 chars description>
- <insert long description, indented with spaces>
+         python3-defusedxml,
+         python3-license-expression,
+         python3-requests
+Description: hook apt command to check cve of packages which will be installed
+ hook apt command to check cve of packages which will be installed
