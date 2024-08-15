@@ -8,12 +8,13 @@ import numpy as  np
 import os
 import re
 
-from spdx.Utils.convertSbom import convertSpdx
+from spdx.Utils.convertSbom import convertSpdx,convertSpdx_Deb_syft11
 from spdx.Utils.extract import remove_file_extension
 from spdx.Utils.java.mavenAnalysis import AnalysisVariabele
 from collections import defaultdict
 
 syft_path = '/usr/share/aptC/spdx/syft/syft'
+syft_path11 = '/usr/share/aptC/spdx/syft11/syft'
 #针对Deb包进行解压缩
 def extract_deb(deb_path):
     dir_Path = re.sub(r'\.deb$', '', deb_path)
@@ -39,7 +40,7 @@ def binaryDebScan(inputPath,output_file,ExterDependencies):
     scan_path = extract_deb(inputPath)
     project_name = scan_path
     # 生成syft普通json
-    command_syft = f"{syft_path} scan  {scan_path} -o json"
+    command_syft = f"{syft_path11} scan  {scan_path} -o json"
     syft_output = subprocess.check_output(command_syft, shell=True)
     syft_json = json.loads(syft_output.decode())
     tempath = scan_path + '-syft.json'
@@ -47,7 +48,8 @@ def binaryDebScan(inputPath,output_file,ExterDependencies):
         json_string =json.dumps(syft_json,indent=4, separators=(',', ': '))
         f.write(json_string)
 
-    convertSpdx(syft_json, project_name, output_file, ExterDependencies)
+    # convertSpdx(syft_json, project_name, output_file, ExterDependencies)
+    convertSpdx_Deb_syft11(syft_json, project_name, output_file, ExterDependencies)
 
 # scan_path = "/home/jiliqiang/Deb/deb/libopencensus-java/"
 # output_file = "/home/jiliqiang/Deb/deb/spdx_sbom/my_spdx_document.spdx.json"
