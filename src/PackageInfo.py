@@ -30,22 +30,22 @@ class PackageInfo:
 			if self.update is not None:
 				release+='p'+self.update
 		version=self.version+release
-		info={'name':normalize.normalReplace(self.name),'version':normalize.normalReplace(version)}
+		info={'name':normalize.normalReplace(self.name),'version':normalize.normalReplace(version),'purl':self.dumpAsPurl()}
 		if self.gitLink is not None:
 			info['gitLink']=self.gitLink
 		return info
 
 	def dumpAsPurl(self):
-		osKind="deb"
+		osKind="rpm"
 		release=""
 		if self.release is not None:
 			release="-"+self.release
 			if self.update is not None:
 				release+='p'+self.update
 		if self.gitLink is None:
-			return 'pkg:'+osKind+'/'+self.osType+'/'+self.name+'@'+self.version+release+'.'+self.dist
+			return normalize.normalReplace('pkg:'+osKind+'/'+self.osType+'/'+self.name+'@'+self.version+release+'.'+self.dist)
 		else:
-			return 'pkg:'+osKind+'/'+self.osType+'/'+self.name+'@'+self.version+release+'.'+self.dist+"&"+"gitLink="+self.gitLink
+			return normalize.normalReplace('pkg:'+osKind+'/'+self.osType+'/'+self.name+'@'+self.version+release+'.'+self.dist+"&"+"gitLink="+self.gitLink)
 
 def loadPackageInfo(jsonInfo):
 	osType=jsonInfo['osType']
