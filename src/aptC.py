@@ -13,7 +13,8 @@ def downloadPackage(selectedPackage):
 
 def queryCVE(spdxObj):
 	s=socket.socket()
-	s.connect(('host.docker.internal',8342))
+	# s.connect(('host.docker.internal',8342))
+	s.connect(('192.168.5.61',8342))
 	nwkTools.sendObject(s,spdxObj)
 	res=nwkTools.receiveObject(s)
 	return res
