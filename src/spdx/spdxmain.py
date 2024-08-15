@@ -32,7 +32,7 @@ def getExternalDependencies(dependsList):
 	ExternalDependencies = []
 	
 	print("解析")
-	#都是purl链接
+	
 	for depends in dependsList:
 		
 		#获取dependency实例数组

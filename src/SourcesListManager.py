@@ -12,7 +12,6 @@ class SourceConfigItem:
 		with os.popen("dpkg --print-architecture") as f:
 			self.arch=f.read().strip()
 	def getFilePath(self):
-
 		return '/var/lib/apt/lists/'+self.url_without_prefix+'_ubuntu_dists_'+self.dist+'_'+self.channel+"_binary-"+self.arch+"_Packages"
 	def getGitLink(self,name,arch):
 		#abandon
