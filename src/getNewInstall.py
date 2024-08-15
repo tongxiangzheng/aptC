@@ -15,7 +15,7 @@ def parseInstallInfo(info:str,sourcesListManager:SourcesListManager.SourcesListM
 	name=info[1]
 	additionalInfo=info[2].split(']')[-2].strip()[1:].split(' ')
 	version_release=additionalInfo[0].split('-')
-	version=version_release[0]
+	version=version_release[0].split(':')[-1]
 	release=None
 	if len(version_release)>1:
 		release=version_release[1]
@@ -35,7 +35,7 @@ def getInstalledPackageInfo(packageName,sourcesListManager):
 			if info.startswith(tmp):
 				dist=info.split(',')[0].split('/')[1]
 				version_release=info.split(',')[1].split('-')
-				version=version_release[0]
+				version=version_release[0].split(':')[-1]
 				release=None
 				if len(version_release)>1:
 					release=version_release[1]

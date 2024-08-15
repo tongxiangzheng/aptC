@@ -108,7 +108,7 @@ def parseDEBPackages(repoInfos,osType,dist,repoURL,repoFileManager)->SpecificPac
 			name=info.split(' ',2)[1]
 		if info.startswith("Version:"):
 			version_release=info.split(' ',1)[1].split('-')
-			version=version_release[0]
+			version=version_release[0].split(':')[-1]
 			if len(version_release)>1:
 				release=version_release[1]
 		if info.startswith("Architecture:"):
@@ -123,6 +123,15 @@ def parseDEBPackages(repoInfos,osType,dist,repoURL,repoFileManager)->SpecificPac
 				provides.append(parseDEBItemInfo(proInfo))
 		if info.startswith("Filename:"):
 			filename=info.split(' ',1)[1]
+	return res
+
+def firstNumber(rawstr)->str:
+	res=""
+	for c in rawstr:
+		if c.isdigit() is True or c == '.':
+			res+=c
+		else:
+			break
 	return res
 
 class RepoFileManager:
@@ -141,9 +150,11 @@ class RepoFileManager:
 		for package in packages:
 			self.packageMap[package.fullName].append(package)
 	def queryPackage(self,name,version,release):
+		version=firstNumber(version)
+		release=firstNumber(release)
 		if name in self.packageMap:
 			for specificPackage in self.packageMap[name]:
-				if specificPackage.packageInfo.version==version and specificPackage.packageInfo.release==release:
+				if firstNumber(specificPackage.packageInfo.version)==version and firstNumber(specificPackage.packageInfo.release)==release:
 					return specificPackage
 		return None
 	

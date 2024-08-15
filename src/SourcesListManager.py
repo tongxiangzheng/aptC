@@ -2,6 +2,14 @@ import os
 import RepoFileManager
 import SpecificPackage
 from loguru import logger as log
+def getSelfOSName():
+	with open("/etc/os-release") as f:
+		data=f.readlines()
+		for info in data:
+			if info.startswith('ID='):
+				return info.strip()[4:-1]	
+	return ""
+selfOSName=getSelfOSName()
 class SourceConfigItem:
 	def __init__(self,url,dist,channel):
 		self.url=url
@@ -12,19 +20,18 @@ class SourceConfigItem:
 		with os.popen("dpkg --print-architecture") as f:
 			self.arch=f.read().strip()
 	def getFilePath(self):
-
 		return '/var/lib/apt/lists/'+self.url_without_prefix+'_ubuntu_dists_'+self.dist+'_'+self.channel+"_binary-"+self.arch+"_Packages"
 	def getGitLink(self,name,arch):
 		#abandon
 		log.warning("abandon")
 		repoPath=self.getFilePath()
 		if repoPath not in self.repoFiles:
-			self.repoFiles[repoPath]=RepoFileManager.RepoFileManager(self.url,repoPath,"ubuntu",self.dist)
+			self.repoFiles[repoPath]=RepoFileManager.RepoFileManager(self.url,repoPath,selfOSName,self.dist)
 		return self.repoFiles[repoPath].getGitLink(name)
 	def getSpecificPackage(self,name,version,release)->SpecificPackage.SpecificPackage:
 		repoPath=self.getFilePath()
 		if repoPath not in self.repoFiles:
-			self.repoFiles[repoPath]=RepoFileManager.RepoFileManager(self.url,repoPath,"ubuntu",self.dist)
+			self.repoFiles[repoPath]=RepoFileManager.RepoFileManager(self.url,repoPath,selfOSName,self.dist)
 		return self.repoFiles[repoPath].queryPackage(name,version,release)
 
 def parseDEBTraditionalSources(data,binaryConfigItems,srcConfigItems):

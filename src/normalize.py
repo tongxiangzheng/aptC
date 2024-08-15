@@ -2,8 +2,10 @@
 
 def normalReplace(s):
 	s=s.replace('~','-tilde-')
+	s=s.replace('+','-plus-')
 	return s
 
 def reNormalReplace(s):
 	s=s.replace('-tilde-','~')
+	s=s.replace('-plus-','+')
 	return s

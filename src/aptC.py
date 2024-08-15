@@ -7,17 +7,19 @@ from loguru import logger as log
 from spdx.spdxmain import spdxmain 
 import normalize
 import json
-import socket
+import requests
 def downloadPackage(selectedPackage):
 	return nwkTools.downloadFile(selectedPackage.repoURL+'/'+selectedPackage.fileName,'/tmp/aptC/packages',normalize.normalReplace(selectedPackage.fileName.rsplit('/',1)[1]))
 
 def queryCVE(spdxObj):
-	s=socket.socket()
-	# s.connect(('host.docker.internal',8342))
-	s.connect(('192.168.5.61',8342))
-	nwkTools.sendObject(s,spdxObj)
-	res=nwkTools.receiveObject(s)
-	return res
+	# url='http://host.docker.internal:8342/querycve/'
+	url='http://192.168.5.61:8342/querycve/'
+	response = requests.post(url, json=spdxObj)
+	if response.status_code == 200:
+		return response.json()
+	else:
+		log.warning(f'Request failed with status code {response.status_code}')
+		return {}
 def main(command,options,packages):
 	sourcesListManager=SourcesListManager.SourcesListManager()
 	packageProvides=dict()
