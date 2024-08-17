@@ -12,8 +12,8 @@ def downloadPackage(selectedPackage):
 	return nwkTools.downloadFile(selectedPackage.repoURL+'/'+selectedPackage.fileName,'/tmp/aptC/packages',normalize.normalReplace(selectedPackage.fileName.rsplit('/',1)[1]))
 
 def queryCVE(spdxObj):
-	# url='http://host.docker.internal:8342/querycve/'
-	url='http://192.168.5.61:8342/querycve/'
+	url='http://host.docker.internal:8342/querycve/'
+	# url='http://192.168.5.61:8342/querycve/'
 	response = requests.post(url, json=spdxObj)
 	if response.status_code == 200:
 		return response.json()
@@ -35,10 +35,16 @@ def main(command,options,packages):
 		dependsList=list(depends.values())
 		packageFilePath=downloadPackage(selectedPackage)
 		spdxPath=spdxmain(selectedPackageName,packageFilePath,dependsList)
+		print("spdx file at "+spdxPath)
 		with open(spdxPath,"r") as f:
 			spdxObj=json.load(f)
-			cves=queryCVE(spdxObj)
-			print(cves)
+		cves=queryCVE(spdxObj)
+		for packageName,cves in cves.items():
+			if len(cves)==0:
+				continue
+			print(packageName+" have cve:")
+			for cve in cves:
+				print(" "+cve)
 	return False
 
 

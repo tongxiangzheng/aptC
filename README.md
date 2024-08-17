@@ -15,8 +15,8 @@ pip3 install cyclonedx-python-lib
 pip3 install winrar
 
 cd /code
-chmod +x install.sh
-./install.sh
+make install
+
 ```
 ### 运行docker:
 ```

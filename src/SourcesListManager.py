@@ -7,7 +7,7 @@ def getSelfOSName():
 		data=f.readlines()
 		for info in data:
 			if info.startswith('ID='):
-				return info.strip()[4:-1]	
+				return info.strip()[3:]	
 	return ""
 selfOSName=getSelfOSName()
 class SourceConfigItem:
