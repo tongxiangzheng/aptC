@@ -8,12 +8,12 @@ from spdx.spdxmain import spdxmain
 import normalize
 import json
 import requests
+import loadConfig
 def downloadPackage(selectedPackage):
 	return nwkTools.downloadFile(selectedPackage.repoURL+'/'+selectedPackage.fileName,'/tmp/aptC/packages',normalize.normalReplace(selectedPackage.fileName.rsplit('/',1)[1]))
 
-def queryCVE(spdxObj):
-	url='http://host.docker.internal:8342/querycve/'
-	# url='http://192.168.5.61:8342/querycve/'
+def queryCVE(spdxObj,aptConfigure:loadConfig.aptcConfigure):
+	url=aptConfigure.serverURL
 	response = requests.post(url, json=spdxObj)
 	if response.status_code == 200:
 		return response.json()
@@ -23,6 +23,10 @@ def queryCVE(spdxObj):
 def main(command,options,packages):
 	sourcesListManager=SourcesListManager.SourcesListManager()
 	packageProvides=dict()
+	aptConfigure=loadConfig.loadConfig()
+	if aptConfigure is None:
+		print('ERROR: cannot load config file in /etc/aptC/config.json, please check config file ')
+		return False
 	for selectedPackageName in packages:
 		selectedPackage,willInstallPackages=getNewInstall.getNewInstall(selectedPackageName,options,sourcesListManager)
 		if selectedPackage is None:
@@ -38,7 +42,7 @@ def main(command,options,packages):
 		print("spdx file at "+spdxPath)
 		with open(spdxPath,"r") as f:
 			spdxObj=json.load(f)
-		cves=queryCVE(spdxObj)
+		cves=queryCVE(spdxObj,aptConfigure)
 		for packageName,cves in cves.items():
 			if len(cves)==0:
 				continue

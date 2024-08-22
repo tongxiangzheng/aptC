@@ -10,6 +10,8 @@ install:
 	cp bin/* $(DESTDIR)$(prefix)/bin/
 	mkdir -p $(DESTDIR)$(prefix)/share/aptC
 	cp -r src/* $(DESTDIR)$(prefix)/share/aptC/
+	mkdir -p $(DESTDIR)$(prefix)/etc/
+	cp -r etc/* $(DESTDIR)$(prefix)/etc/
 
 uninstall:
 	-rm -f $(DESTDIR)$(prefix)/bin/aptc
