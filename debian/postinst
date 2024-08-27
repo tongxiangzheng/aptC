@@ -8,10 +8,10 @@ set -e
 
 case "$1" in
     configure)
-	sed -i "/alias apt='aptc'/d" /etc/bash.bashrc
-	sed -i "/alias apt-get='apt-getc'/d" /etc/bash.bashrc
-	echo "alias apt='aptc'" >> /etc/bash.bashrc
-	echo "alias apt-get='apt-getc'" >> /etc/bash.bashrc
+	#sed -i "/alias apt='aptc'/d" /etc/bash.bashrc
+	#sed -i "/alias apt-get='apt-getc'/d" /etc/bash.bashrc
+	#echo "alias apt='aptc'" >> /etc/bash.bashrc
+	#echo "alias apt-get='apt-getc'" >> /etc/bash.bashrc
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)

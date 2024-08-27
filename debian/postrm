@@ -21,8 +21,8 @@ set -e
 
 case "$1" in
     purge|remove|upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
-	sed -i "/alias apt='aptc'/d" /etc/bash.bashrc
-	sed -i "/alias apt-get='apt-getc'/d" /etc/bash.bashrc
+	#sed -i "/alias apt='aptc'/d" /etc/bash.bashrc
+	#sed -i "/alias apt-get='apt-getc'/d" /etc/bash.bashrc
     ;;
 
     *)

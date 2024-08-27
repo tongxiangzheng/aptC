@@ -40,17 +40,21 @@ sudo apt install -y dh-make
 ```
 文件夹改名为aptc-1.0
 
-在文件夹内：
+在文件夹内,若对代码进行修改：
 ```
-dh_make --createorig
+dh_make --createorig -i -y
 ```
-输入i
-输入y，确认
 
 ```
-dpkg-buildpackage -us -uc -i -y
+dpkg-buildpackage -us -uc
 ```
 ### docker方式
-docker build -t build_aptc .
-docker run -v <生成deb文件保存目录>:/mnt/res build_aptc
+若对代码进行修改
+```
+dh_make --native -i -y
+```
 
+```
+docker build -t build_aptc .
+docker run -v <生成deb文件保存目录>:/mnt/res build_aptc --rm
+```
