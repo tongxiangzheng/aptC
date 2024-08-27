@@ -1,5 +1,5 @@
-aptc (1.0-1) UNRELEASED; urgency=medium
+aptc (1.0) UNRELEASED; urgency=medium
 
-  * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
+  * Initial Release.
 
- -- unknown <txz@unknown>  Thu, 08 Aug 2024 13:41:30 +0800
+ -- Xiangzheng Tong <920504276@qq.com>  Tue, 27 Aug 2024 15:33:03 +0800

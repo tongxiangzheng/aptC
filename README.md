@@ -48,9 +48,9 @@ dh_make --createorig
 输入y，确认
 
 ```
-dpkg-buildpackage -us -uc
+dpkg-buildpackage -us -uc -i -y
 ```
 ### docker方式
 docker build -t build_aptc .
-docker run -v <生成deb文件保存目录>:/mnt/res 
+docker run -v <生成deb文件保存目录>:/mnt/res build_aptc
 

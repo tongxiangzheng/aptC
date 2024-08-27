@@ -1,21 +1,16 @@
 FROM ubuntu:latest
 
-WORKDIR /app
+WORKDIR /app/aptc-1.0
 
 RUN apt update
 RUN apt install -y dh-make
 
-RUN mkdir /app/aptC-1.0
-COPY * /app/aptc-1.0/
-
-RUN cd /app/aptC-1.0
-
-RUN dh_make --createorig
+COPY bin /app/aptc-1.0/bin
+COPY etc /app/aptc-1.0/etc
+COPY src /app/aptc-1.0/src
+COPY debian /app/aptc-1.0/debian
+COPY makefile /app/aptc-1.0/makefile
 
 RUN dpkg-buildpackage -us -uc
 
-RUN cd /app
-
-RUN cp  
-
-CMD  ["cp","/app/aptc_1.0-1_all.deb","/mnt/res"]
+CMD  ["cp","/app/aptc_1.0_all.deb","/mnt/res"]
