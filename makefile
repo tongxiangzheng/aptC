@@ -1,4 +1,3 @@
-prefix = /usr
 all:
 	
 clean:
@@ -6,15 +5,15 @@ clean:
 distclean: clean
 
 install:
-	mkdir -p $(DESTDIR)$(prefix)/bin
-	cp bin/* $(DESTDIR)$(prefix)/bin/
-	mkdir -p $(DESTDIR)$(prefix)/share/aptC
-	cp -r src/* $(DESTDIR)$(prefix)/share/aptC/
-	mkdir -p $(DESTDIR)$(prefix)/etc/
-	cp -r etc/* $(DESTDIR)$(prefix)/etc/
+	mkdir -p $(DESTDIR)/usr/bin
+	cp bin/* $(DESTDIR)/usr/bin/
+	mkdir -p $(DESTDIR)/usr/share/aptC
+	cp -r src/* $(DESTDIR)/usr/share/aptC/
+	mkdir -p $(DESTDIR)/etc/
+	cp -r etc/* $(DESTDIR)/etc/
 
 uninstall:
-	-rm -f $(DESTDIR)$(prefix)/bin/aptc
-	-rm -f $(DESTDIR)$(prefix)/bin/apt-getc
+	-rm -f $(DESTDIR)/usr/bin/aptc
+	-rm -f $(DESTDIR)/usr/bin/apt-getc
 
 .PHONY: all install clean distclean uninstall

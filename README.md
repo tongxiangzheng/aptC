@@ -33,10 +33,13 @@ chmod +x uninstall.sh
 ./uninstall.sh
 ```
 ## 如何打包
+
+### 命令行方式
 ```
-sudo apt install -y dh_make
+sudo apt install -y dh-make
 ```
 文件夹改名为aptc-1.0
+
 在文件夹内：
 ```
 dh_make --createorig
@@ -47,4 +50,7 @@ dh_make --createorig
 ```
 dpkg-buildpackage -us -uc
 ```
+### docker方式
+docker build -t build_aptc .
+docker run -v <生成deb文件保存目录>:/mnt/res 
 
