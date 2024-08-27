@@ -1,3 +1,10 @@
+debian/.debhelper/
+debian/aptc/
+debian/aptc.substvars
+debian/debhelper-build-stamp
+debian/files
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
