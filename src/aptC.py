@@ -58,14 +58,13 @@ def main(command,options,packages):
 	return False
 
 
-def core(exec,args):
+def core(exec,args,setyes=False):
 	cmd=exec
-	setyes=False
 	for arg in args:
 		cmd+=" "+arg
 		if arg=='-y':
-			setyes=True
-	if setyes is False:
+			setyes=False
+	if setyes is True:
 		cmd+=" -y"
 	return os.system(cmd)
 
@@ -98,7 +97,7 @@ def parseCommand(args):
 def user_main(exec,args, exit_code=False):
 	errcode=None
 	for arg in args:
-		if arg=='-s' or arg=="--simulate" or arg=="--just-print" or arg=="--dry-run" or arg=="--recon" or arg=="--no-act":
+		if arg=='-s' or arg=="--simulate" or arg=="--just-print" or arg=="--dry-run" or arg=="--recon" or arg=="--no-act" or arg=="-y":
 			errcode=core(exec,args)
 			break
 	if errcode is None:
