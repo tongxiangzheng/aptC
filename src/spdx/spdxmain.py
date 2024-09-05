@@ -17,14 +17,18 @@ class ExternalDependency:
 		self.gitLink = gitLink
 		self.purl = purl
 		
-def spdxmain(packageName,packageFilePath,dependsList):
+def spdxmain(packageName,packageFilePath,dependsList,sbomType='spdx',saveSbomPath='/tmp/aptC'):
 	#print("binary deb file at: "+packageFilePath)
 	#print("purl for: "+packageName)
 	#for depends in dependsList:
 	#	print(depends)
 	ExternalDependencies=getExternalDependencies(dependsList)
-	resPath=packageFilePath+".spdx.json"
-	BinaryDebAnalysis.binaryDebScan(packageFilePath,resPath,ExternalDependencies)
+	# resPath=packageFilePath+".spdx.json"
+	if sbomType == 'spdx':
+		resPath = saveSbomPath+packageName+".spdx.json"
+	if sbomType == 'cyclonedx':
+		resPath = saveSbomPath+packageName+".cyclonedx.json"
+	BinaryDebAnalysis.binaryDebScan(packageFilePath,resPath,ExternalDependencies,sbomType)
 	return resPath
 
 

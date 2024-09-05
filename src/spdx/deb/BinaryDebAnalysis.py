@@ -8,7 +8,7 @@ import numpy as  np
 import os
 import re
 
-from spdx.Utils.convertSbom import convertSpdx,convertSpdx_Deb_syft11
+from spdx.Utils.convertSbom import convertSpdx,convertSpdx_Deb_syft11,convertCyclonedx
 from spdx.Utils.extract import remove_file_extension
 from spdx.Utils.java.mavenAnalysis import AnalysisVariabele
 from collections import defaultdict
@@ -33,7 +33,7 @@ def getExternalDependenies(scan_path):
     dpkg_output_json = json.loads(dpkg_output.decode())
     print(dpkg_output_json)
 #针对二进制的deb包做分析
-def binaryDebScan(inputPath,output_file,ExterDependencies):
+def binaryDebScan(inputPath,output_file,ExterDependencies,sbomType):
     #获取外部依赖
     
     #获取内部依赖：
@@ -47,9 +47,11 @@ def binaryDebScan(inputPath,output_file,ExterDependencies):
     with open(tempath, "w") as f:
         json_string =json.dumps(syft_json,indent=4, separators=(',', ': '))
         f.write(json_string)
-
+    if sbomType == 'spdx':
     # convertSpdx(syft_json, project_name, output_file, ExterDependencies)
-    convertSpdx_Deb_syft11(syft_json, project_name, output_file, ExterDependencies)
+        convertSpdx_Deb_syft11(syft_json, project_name, output_file, ExterDependencies)
+    if sbomType == 'cyclonedx':
+        convertCyclonedx(syft_json,project_name,output_file,ExterDependencies)
 
 # scan_path = "/home/jiliqiang/Deb/deb/libopencensus-java/"
 # output_file = "/home/jiliqiang/Deb/deb/spdx_sbom/my_spdx_document.spdx.json"
