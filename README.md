@@ -34,7 +34,7 @@ chmod +x uninstall.sh
 ```
 ## 如何打包
 
-### 命令行方式
+### 在本地环境构建软件包
 ```
 sudo apt install -y dh-make
 ```
@@ -48,7 +48,7 @@ dh_make --createorig -i -y
 ```
 dpkg-buildpackage -us -uc
 ```
-### docker方式
+### 利用docker构建软件包
 若对代码进行修改
 ```
 dh_make --native -i -y
@@ -57,5 +57,5 @@ dh_make --native -i -y
 ```
 docker build --output=<二进制文件保存目录> .
 docker build -t build_aptc .
-docker run -v <生成deb文件保存目录>:/mnt/res build_aptc --rm
+docker run -v <deb软件包保存目录>:/mnt/res build_aptc --rm
 ```
