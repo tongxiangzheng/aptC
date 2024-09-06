@@ -113,14 +113,16 @@ def parseDEBPackages(repoInfos,osType,dist,repoURL,repoFileManager)->SpecificPac
 				release=version_release[1]
 		if info.startswith("Architecture:"):
 			arch=info.split(' ',1)[1]
-		if info.startswith("Depends:"):
-			depInfos=info.split(' ',1)[1].split("|")
+		if info.startswith("Depends:") or info.startswith("Pre-Depends:") or info.startswith("Recommends:"):
+			depInfos=info.split(' ',1)[1].split(",")
 			for depInfo in depInfos:
-				requires.append(parseDEBItemInfo(depInfo))
+				for dInfo in depInfo.split('|'):
+					requires.append(parseDEBItemInfo(dInfo))
 		if info.startswith("Provides:"):
-			proInfos=info.split(' ',1)[1].split("|")
+			proInfos=info.split(' ',1)[1].split(",")
 			for proInfo in proInfos:
-				provides.append(parseDEBItemInfo(proInfo))
+				for pInfo in proInfo.split('|'):
+					provides.append(parseDEBItemInfo(pInfo))
 		if info.startswith("Filename:"):
 			filename=info.split(' ',1)[1]
 	return res
@@ -139,22 +141,30 @@ class RepoFileManager:
 		self.url=url
 		self.repoPath=repoPath
 		self.packageMap=defaultdict(defaultNoneList)
-		try:
+		self.enable=True
+		if os.path.isfile(repoPath):
 			with open(repoPath,"r") as f:
 				data=f.readlines()
-		except Exception:
+		elif os.path.isfile(repoPath+".lz4"):
 			with open(repoPath+".lz4","rb") as f:
 				data=f.read()
 				data = lz4.frame.decompress(data).decode().split('\n')
+		else:
+			self.enable=False
+			return
 		packages=parseDEBPackages(data,osType,dist,url,self)
 		for package in packages:
 			self.packageMap[package.fullName].append(package)
 	def queryPackage(self,name,version,release):
+		if self.enable is False:
+			return None
 		version=firstNumber(version)
-		release=firstNumber(release)
+		if release is not None:
+			release=firstNumber(release)
 		if name in self.packageMap:
 			for specificPackage in self.packageMap[name]:
-				if firstNumber(specificPackage.packageInfo.version)==version and firstNumber(specificPackage.packageInfo.release)==release:
-					return specificPackage
+				if firstNumber(specificPackage.packageInfo.version)==version:
+					if specificPackage.packageInfo.release is None or firstNumber(specificPackage.packageInfo.release)==release:
+						return specificPackage
 		return None
 	

@@ -7,21 +7,35 @@ def compareVersion(version1,version2):
 	v1=version1.split('.')
 	v2=version2.split('.')
 	for i in range(min(len(v1),len(v2))):
-		if v1[i]<v2[i]:
+		if int(v1[i])<int(v2[i]):
 			return -1
-		if v1[i]>v2[i]:
-			return -1
-	if len(v1)!=len(v2):
-		log.warning("version cannot compare, v1: "+version1+" v2: "+version2)
+		if int(v1[i])>int(v2[i]):
+			return 1
+	#if len(v1)!=len(v2):
+	#	log.warning("version cannot compare, v1: "+version1+" v2: "+version2)
 	return 0
+def firstNumber(rawstr)->str:
+	res=""
+	for c in rawstr:
+		if c.isdigit() is True or c == '.':
+			res+=c
+		else:
+			break
+	if res.endswith('.'):
+		res=res[:-1]
+	return res
 class PackageEntry:
 	def __init__(self,name:str,flags:str,version:str,release:str):
 		self.name=name
 		self.flags=flags
+		if version is not None:
+			version=firstNumber(version.split(':')[-1])
 		self.version=version
+		if release is not None:
+			release=firstNumber(release)
 		self.release=release
 	def checkMatch(self,dist):
-		if self.flags is None:
+		if self.flags is None or dist.flags is None:
 			return True
 		if dist.version is None:
 			log.warning(self.name+" have problem: dist version is None")
@@ -61,7 +75,25 @@ class PackageEntry:
 				return True
 			else:
 				return False
+	def dump(self):
+		res=self.name
+		if self.flags=='EQ':
+			res+=' = '
+		elif self.flags=='LE':
+			res+=' <= '
+		elif self.flags=='LT':
+			res+=' < '
+		elif self.flags=='GE':
+			res+=' >= '
+		elif self.flags=='GT':
+			res+=' > '
 		
+		if self.version is not None:
+			res+=self.version
+		if self.release is not None:
+			res+='-'+self.release
+		return res
+	
 def defaultNoneList():
 	return []
 class EntryMap:
@@ -130,7 +162,32 @@ class SpecificPackage:
 		self.fileName=fileName
 		self.getGitLinked=False
 		self.source=source
-	
+		self.registerProvided=False
+	def addProvidesPointer(self,package):
+		#无需手动调用，addRequirePointer自动处理
+		self.providesPointers.append(package)
+	def addRequirePointer(self,package):
+		self.requirePointers.append(package)
+		package.addProvidesPointer(self)
+	def registerProvides(self,entryMap:EntryMap)->None:
+		if self.registerProvided is True:
+			return
+		self.registerProvided=True
+		for provide in self.providesInfo:
+			entryMap.registerEntry(provide,self)
+	def findRequires(self,entryMap:EntryMap)->None:
+		requirePackageSet=set()
+		requires=dict()
+		for require in self.requiresInfo:
+			if require.name not in requires:
+				requires[require.name]=[]
+			requires[require.name].append(require)
+		for requireName,requireList in requires.items():
+			res=entryMap.queryRequires(requireName,requireList)
+			if res is not None and res not in requirePackageSet:
+				self.addRequirePointer(res)
+				requirePackageSet.add(res)
+
 	def setGitLink(self):
 		if self.getGitLinked is True:
 			return

@@ -26,7 +26,18 @@ def queryCVE(spdxObj,aptConfigure:loadConfig.aptcConfigure):
 	else:
 		print(f'failed to query CVE: Request failed with status code {response.status_code}')
 		return {}
-def main(command,options,packages):
+def main(command,options,packages,genSpdx=True,saveSpdxPath=None,genCyclonedx=False,saveCyclonedxPath=None,dumpFileOnly=False):
+	assumeNo=False
+	for option in options:
+		if option=='-n':
+			assumeNo=True
+		if option.startswith('--genspdx'):
+			genSpdx=True
+			saveSpdxPath=option.split('=',1)[1]
+		if option.startswith('--gencyclonedx'):
+			genCyclonedx=True
+			saveCyclonedxPath=option.split('=',1)[1]
+
 	sourcesListManager=SourcesListManager.SourcesListManager()
 	packageProvides=dict()
 	aptConfigure=loadConfig.loadConfig()
@@ -34,7 +45,7 @@ def main(command,options,packages):
 		print('ERROR: cannot load config file in /etc/aptC/config.json, please check config file ')
 		return False
 	for selectedPackageName in packages:
-		selectedPackage,willInstallPackages=getNewInstall.getNewInstall(selectedPackageName,options,sourcesListManager)
+		selectedPackage,willInstallPackages=getNewInstall.getNewInstall(selectedPackageName,options,sourcesListManager,dumpFileOnly)
 		if selectedPackage is None:
 			continue
 		selectedPackageName=selectedPackage.fullName
@@ -44,8 +55,16 @@ def main(command,options,packages):
 			depends[p.packageInfo.name+'@'+p.packageInfo.version]=p.packageInfo.dumpAsDict()
 		dependsList=list(depends.values())
 		packageFilePath=downloadPackage(selectedPackage)
-		spdxPath=spdxmain(selectedPackageName,packageFilePath,dependsList)
-		print("spdx file at "+spdxPath)
+		if dumpFileOnly is True:
+			if genSpdx is True:
+				spdxPath=spdxmain(selectedPackageName,packageFilePath,dependsList,'spdx',saveSpdxPath)
+			if genCyclonedx is True:
+				cyclonedxPath=spdxmain(selectedPackageName,packageFilePath,dependsList,'cyclonedx',saveCyclonedxPath)
+			continue
+		spdxPath=spdxmain(selectedPackageName,packageFilePath,dependsList,'spdx',saveSpdxPath)
+		if genCyclonedx is True:
+			cyclonedxPath=spdxmain(selectedPackageName,packageFilePath,dependsList,'cyclonedx',saveCyclonedxPath)
+		#print("spdx file at "+spdxPath)
 		with open(spdxPath,"r") as f:
 			spdxObj=json.load(f)
 		cves=queryCVE(spdxObj,aptConfigure)
@@ -55,15 +74,29 @@ def main(command,options,packages):
 			print(packageName+" have cve:")
 			for cve in cves:
 				print(" "+cve)
+	if assumeNo is True or dumpFileOnly is True:
+		return False
+	
+	print('Are you true to continue? (y/n)')
+	userinput=input()
+	if userinput=='y':
+		return True
+	else:
+		print('abort')
 	return False
 
 
 def core(exec,args,setyes=False):
 	cmd=exec
 	for arg in args:
+		if arg.startswith('--genspdx'):
+			continue
+		if arg.startswith('--gencyclonedx'):
+			continue
 		cmd+=" "+arg
 		if arg=='-y':
 			setyes=False
+		
 	if setyes is True:
 		cmd+=" -y"
 	return os.system(cmd)
@@ -94,6 +127,7 @@ def parseCommand(args):
 			if arg.endswith('='):
 				needMerge=True
 	return command,options,packages
+
 def user_main(exec,args, exit_code=False):
 	errcode=None
 	for arg in args:
@@ -105,6 +139,18 @@ def user_main(exec,args, exit_code=False):
 		if command=='install' or command=='reinstall':
 			if main(command,options,packages) is False:
 				errcode=1
+		elif command=='genspdx':
+			if len(packages)!=2:
+				print("unknown usage for apt genspdx")
+				return 1
+			main(command,options,[packages[0]],genSpdx=True,saveSpdxPath=packages[1],genCyclonedx=False,saveCyclonedxPath=None,dumpFileOnly=True)
+			return 0
+		elif command=='gencyclonedx':
+			if len(packages)!=2:
+				print("unknown usage for apt gencyclonedx")
+				return 1
+			main(command,options,[packages[0]],genSpdx=False,saveSpdxPath=None,genCyclonedx=True,saveCyclonedxPath=packages[1],dumpFileOnly=True)
+			return 0
 	if errcode is None:
 		errcode=core(exec,args)
 

@@ -23,11 +23,12 @@ def spdxmain(packageName,packageFilePath,dependsList,sbomType='spdx',saveSbomPat
 	#for depends in dependsList:
 	#	print(depends)
 	ExternalDependencies=getExternalDependencies(dependsList)
-	# resPath=packageFilePath+".spdx.json"
+	if saveSbomPath is None:
+		saveSbomPath='/tmp/aptC'
 	if sbomType == 'spdx':
-		resPath = saveSbomPath+packageName+".spdx.json"
+		resPath = os.path.join(saveSbomPath,packageName+".spdx.json")
 	if sbomType == 'cyclonedx':
-		resPath = saveSbomPath+packageName+".cyclonedx.json"
+		resPath = os.path.join(saveSbomPath,packageName+".cyclonedx.json")
 	BinaryDebAnalysis.binaryDebScan(packageFilePath,resPath,ExternalDependencies,sbomType)
 	return resPath
 
@@ -37,7 +38,7 @@ def getExternalDependencies(dependsList):
 	
 	ExternalDependencies = []
 	
-	print("解析")
+	#print("解析")
 	
 	for depends in dependsList:
 		
@@ -60,7 +61,7 @@ def getExternalDependencies(dependsList):
 		print("name:",name)
 		print("version",version)
 		print('gitLink',gitLink)
-		print('purl',purl)
+		#print('purl',purl)
 
 	return ExternalDependencies
 def parse_purl(purl):
