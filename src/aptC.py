@@ -51,8 +51,12 @@ def main(command,options,packages,genSpdx=True,saveSpdxPath=None,genCyclonedx=Fa
 		selectedPackageName=selectedPackage.fullName
 		packageProvides[selectedPackageName]=willInstallPackages
 		depends=dict()
+		project_packages=dict()
 		for p in willInstallPackages:
 			depends[p.packageInfo.name+'@'+p.packageInfo.version]=p.packageInfo.dumpAsDict()
+			if p.packageInfo.name not in project_packages:
+				project_packages[p.packageInfo.name]=[]
+			project_packages[p.packageInfo.name].append(p.fullName)
 		dependsList=list(depends.values())
 		packageFilePath=downloadPackage(selectedPackage)
 		if dumpFileOnly is True:
@@ -68,10 +72,18 @@ def main(command,options,packages,genSpdx=True,saveSpdxPath=None,genCyclonedx=Fa
 		with open(spdxPath,"r") as f:
 			spdxObj=json.load(f)
 		cves=queryCVE(spdxObj,aptConfigure)
-		for packageName,cves in cves.items():
+		for projectName,cves in cves.items():
 			if len(cves)==0:
 				continue
-			print(packageName+" have cve:")
+			print("package: ",end='')
+			first=True
+			for packageName in project_packages[projectName]:
+				if first is True:
+					first=False
+				else:
+					print(", ",end='')
+				print(packageName,end='')
+			print(" have cve:")
 			for cve in cves:
 				print(" "+cve)
 	if assumeNo is True or dumpFileOnly is True:
@@ -137,8 +149,11 @@ def user_main(exec,args, exit_code=False):
 	if errcode is None:
 		command,options,packages=parseCommand(args)
 		if command=='install' or command=='reinstall':
-			if main(command,options,packages) is False:
-				errcode=1
+			if main(command,options,packages) is True:
+				core(exec,args,setyes=True)
+			else:
+				errcode=0
+
 		elif command=='genspdx':
 			if len(packages)!=2:
 				print("unknown usage for apt genspdx")
