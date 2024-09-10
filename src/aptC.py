@@ -28,16 +28,20 @@ def queryCVE(spdxObj,aptConfigure:loadConfig.aptcConfigure):
 		return {}
 def main(command,options,packages,genSpdx=True,saveSpdxPath=None,genCyclonedx=False,saveCyclonedxPath=None,dumpFileOnly=False):
 	assumeNo=False
+	noPackagesWillInstalled=True
 	for option in options:
 		if option=='-n':
 			assumeNo=True
 		if option.startswith('--genspdx'):
 			genSpdx=True
+			if len(option.split('=',1))!=2:
+				print("usage: apt install <packages> --genspdx=<path>")
+				return False
 			saveSpdxPath=option.split('=',1)[1]
 		if option.startswith('--gencyclonedx'):
 			genCyclonedx=True
 			saveCyclonedxPath=option.split('=',1)[1]
-
+	
 	sourcesListManager=SourcesListManager.SourcesListManager()
 	packageProvides=dict()
 	aptConfigure=loadConfig.loadConfig()
@@ -48,6 +52,8 @@ def main(command,options,packages,genSpdx=True,saveSpdxPath=None,genCyclonedx=Fa
 		selectedPackage,willInstallPackages=getNewInstall.getNewInstall(selectedPackageName,options,sourcesListManager,dumpFileOnly)
 		if selectedPackage is None:
 			continue
+		if len(willInstallPackages)>0:
+			noPackagesWillInstalled=False
 		selectedPackageName=selectedPackage.fullName
 		packageProvides[selectedPackageName]=willInstallPackages
 		depends=dict()
@@ -88,6 +94,8 @@ def main(command,options,packages,genSpdx=True,saveSpdxPath=None,genCyclonedx=Fa
 				print(" "+cve)
 	if assumeNo is True or dumpFileOnly is True:
 		return False
+	if noPackagesWillInstalled is True:
+		return True
 	
 	print('Are you true to continue? (y/n)')
 	userinput=input()

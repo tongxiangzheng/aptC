@@ -55,6 +55,7 @@ dh_make --native -i -y
 ```
 
 ```
+docker build --output=<二进制文件保存目录> .
 docker build -t build_aptc .
 docker run -v <生成deb文件保存目录>:/mnt/res build_aptc --rm
 ```

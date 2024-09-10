@@ -10,8 +10,10 @@ def getSelfDist():
 			if info.startswith('VERSION_CODENAME='):
 				return info.strip()[17:]	
 	return ""
-dist=getSelfDist()
+selfDist=getSelfDist()
 def parseInstallInfo(info:str,sourcesListManager:SourcesListManager.SourcesListManager)->SpecificPackage.SpecificPackage:
+	if info.endswith('[]'):
+		info=info.rsplit(' ',1)[0]
 	info=info.strip().split(' ',2)
 	name=info[1]
 	additionalInfo=info[2].split(']')[-2].strip()[1:].split(' ')
@@ -60,6 +62,8 @@ def getNewInstall(packageName:str,options,sourcesListManager:SourcesListManager.
 			continue
 		if option.startswith('--gencyclonedx'):
 			continue
+		if option.startswith('-n'):
+			continue
 		cmd+=option+' '
 	cmd+=packageName
 	res=[]
@@ -76,6 +80,8 @@ def getNewInstall(packageName:str,options,sourcesListManager:SourcesListManager.
 		# it not work because in non-terminal, the info will show
 		if info.startswith('Inst '):
 			res.append(parseInstallInfo(info,sourcesListManager))
+	if len(res)==0:
+		return None,[]
 	selectedPackage=None
 	for p in res:
 		if p.fullName==packageName:

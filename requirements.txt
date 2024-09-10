@@ -11,3 +11,4 @@ cyclonedx-bom
 cyclonedx-python-lib
 winrar
 numpy
+libarchive
