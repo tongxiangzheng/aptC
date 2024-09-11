@@ -75,23 +75,34 @@ def main(command,options,packages,genSpdx=True,saveSpdxPath=None,genCyclonedx=Fa
 		if genCyclonedx is True:
 			cyclonedxPath=spdxmain(selectedPackageName,packageFilePath,dependsList,'cyclonedx',saveCyclonedxPath)
 		#print("spdx file at "+spdxPath)
+
 		with open(spdxPath,"r") as f:
 			spdxObj=json.load(f)
 		cves=queryCVE(spdxObj,aptConfigure)
+		
+		selectedPackage_cves=cves[selectedPackage.packageInfo.name]
+		for projectName,cves in cves.items():
+			if len(cves)==0:
+				continue
+			if projectName not in project_packages:
+				selectedPackage_cves.extend(cves)
+		cves[selectedPackage.packageInfo.name]=selectedPackage_cves
+
 		for projectName,cves in cves.items():
 			if len(cves)==0:
 				continue
 			print("package: ",end='')
 			first=True
-			for packageName in project_packages[projectName]:
-				if first is True:
-					first=False
-				else:
-					print(", ",end='')
-				print(packageName,end='')
-			print(" have cve:")
-			for cve in cves:
-				print(" "+cve)
+			if projectName in project_packages:
+				for packageName in project_packages[projectName]:
+					if first is True:
+						first=False
+					else:
+						print(", ",end='')
+					print(packageName,end='')
+				print(" have cve:")
+				for cve in cves:
+					print(" "+cve)
 	if assumeNo is True or dumpFileOnly is True:
 		return False
 	if noPackagesWillInstalled is True:
