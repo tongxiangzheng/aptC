@@ -2,10 +2,7 @@ import os
 
 import lz4.frame
 
-from SpecificPackage import *
-
-
-
+import SpecificPackage
 
 def parseDEBItemInfo(item):
     item=item.strip()
@@ -71,9 +68,9 @@ def parseDEBItemInfo(item):
         # To illustrate: 0.1 < 0.1 evaluates to true.
     else:
         name=item
-    return PackageEntry(name,flags,version,release)
+    return SpecificPackage.PackageEntry(name,flags,version,release)
 
-def parseDEBPackages(repoInfos,osType,dist,repoURL,repoFileManager)->SpecificPackage:
+def parseDEBPackages(repoInfos,osType,dist,repoURL)->SpecificPackage:
 	fullName=""
 	name=""
 	version=""
@@ -89,9 +86,9 @@ def parseDEBPackages(repoInfos,osType,dist,repoURL,repoFileManager)->SpecificPac
 		if len(info)==0:
 			if name=="":
 				name=fullName
-			provides.append(PackageEntry(fullName,"EQ",version,release))
-			packageInfo=PackageInfo(osType,dist,name,version,release,arch)
-			res.append(SpecificPackage(packageInfo,fullName,provides,requires,arch,source,repoURL=repoURL,fileName=filename))
+			provides.append(SpecificPackage.PackageEntry(fullName,"EQ",version,release))
+			packageInfo=SpecificPackage.PackageInfo(osType,dist,name,version,release,arch)
+			res.append(SpecificPackage.SpecificPackage(packageInfo,fullName,provides,requires,arch,source,repoURL=repoURL,fileName=filename))
 			fullName=""
 			name=""
 			version=""
@@ -140,7 +137,7 @@ class RepoFileManager:
 	def __init__(self,url,repoPath,osType,dist):
 		self.url=url
 		self.repoPath=repoPath
-		self.packageMap=defaultdict(defaultNoneList)
+		self.packageMap=SpecificPackage.defaultdict(SpecificPackage.defaultNoneList)
 		self.enable=True
 		if os.path.isfile(repoPath):
 			with open(repoPath,"r") as f:
@@ -152,7 +149,7 @@ class RepoFileManager:
 		else:
 			self.enable=False
 			return
-		packages=parseDEBPackages(data,osType,dist,url,self)
+		packages=parseDEBPackages(data,osType,dist,url)
 		for package in packages:
 			self.packageMap[package.fullName].append(package)
 	def queryPackage(self,name,version,release):
