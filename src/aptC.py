@@ -9,11 +9,13 @@ import normalize
 import json
 import requests
 import loadConfig
+import scansrc
+
 def downloadPackage(selectedPackage):
 	return nwkTools.downloadFile(selectedPackage.repoURL+'/'+selectedPackage.fileName,'/tmp/aptC/packages',normalize.normalReplace(selectedPackage.fileName.rsplit('/',1)[1]))
 
 def queryCVE(spdxObj,aptConfigure:loadConfig.aptcConfigure):
-	url=aptConfigure.serverURL
+	url=aptConfigure.querycveURL
 	try:
 		response = requests.post(url, json=spdxObj)
 	except requests.exceptions.ConnectionError as e:
@@ -172,7 +174,6 @@ def user_main(exec,args, exit_code=False):
 				core(exec,args,setyes=True)
 			else:
 				errcode=0
-
 		elif command=='genspdx':
 			if len(packages)!=2:
 				print("unknown usage for apt genspdx")
@@ -185,6 +186,8 @@ def user_main(exec,args, exit_code=False):
 				return 1
 			main(command,options,[packages[0]],genSpdx=False,saveSpdxPath=None,genCyclonedx=True,saveCyclonedxPath=packages[1],dumpFileOnly=True)
 			return 0
+		elif command=='scansrc':
+			errcode=scansrc.scansrc(packages)
 	if errcode is None:
 		errcode=core(exec,args)
 
