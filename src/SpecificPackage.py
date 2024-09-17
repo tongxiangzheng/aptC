@@ -126,20 +126,28 @@ class EntryMap:
 				if len(res2)==1:
 					return res2[0]
 				name=res[0].packageInfo.name
-				version=res[0].packageInfo.version
+				versionEntry=res[0].getSelfEntry()
 				res2=res[0]
 				for r in res[1:]:
 					if(name!=r.packageInfo.name):
-						log.warning("failed to decide require package for: "+entry.name)
-						for r1 in res:
-							log.info(" one of provider is: "+r1.fullName)
+						#log.warning("failed to decide require package for: "+entry.name)
+						#for r1 in res:
+						#	log.info(" one of provider is: "+r1.fullName)
 						return res2
-					if compareVersion(version,r.packageInfo.version)==-1:
-						version=r.packageInfo.version
+					if compareVersion(versionEntry.version,r.getSelfEntry().version)==-1:
+						versionEntry=r.getSelfEntry()
 						res2=r
 				return res2
 		#TODO:check res[0][1] is match
 		return res[0]
+def getDependes(package,dependesSet:set):
+	if package in dependesSet:
+		return
+	dependesSet.add(package)
+	for p in package.requirePointers:
+		getDependes(p,dependesSet)	
+
+
 def defaultCVEList():
 	return 0
 class Counter:
@@ -187,7 +195,8 @@ class SpecificPackage:
 			if res is not None and res not in requirePackageSet:
 				self.addRequirePointer(res)
 				requirePackageSet.add(res)
-
+	def getSelfEntry(self):
+		return self.providesInfo[-1]
 	def setGitLink(self):
 		if self.getGitLinked is True:
 			return

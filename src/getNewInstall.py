@@ -36,9 +36,16 @@ def getInstalledPackagesInfo(sourcesListManager):
 	for info in data[1:]:
 		if len(info)==0:
 			continue
-		packageName=info.split(',')[0].split('/')[0]
-		dist=info.split(',')[0].split('/')[1]
-		version_release=info.split(',')[1].split('-')
+		packageName=info.split('/',1)[0]
+		dists=info.split('/',1)[1].split(' ',1)[0].split(',')
+		dist=None
+		for d in dists:
+			if d!="now":
+				dist=d
+				break
+		if dist is None:
+			continue
+		version_release=info.split(' ')[1].split('-')
 		version=version_release[0].split(':')[-1]
 		release=None
 		if len(version_release)>1:
@@ -47,13 +54,7 @@ def getInstalledPackagesInfo(sourcesListManager):
 		if package is not None:
 			res.append(package)
 	return res
-
-def getDependes(package:SpecificPackage.SpecificPackage,dependesSet:set):
-	if package in dependesSet:
-		return
-	dependesSet.add(package)
-	for p in package.requirePointers:
-		getDependes(p,dependesSet)		
+	
 
 def getNewInstall(packageName:str,options,sourcesListManager:SourcesListManager.SourcesListManager,includeInstalled=False):
 	cmd="/usr/bin/apt-get reinstall -s "
@@ -113,7 +114,7 @@ def getNewInstall(packageName:str,options,sourcesListManager:SourcesListManager.
 		for package in res:
 			package.findRequires(entryMap)
 		depends=set()
-		getDependes(selectedPackage,depends)
+		SpecificPackage.getDependes(selectedPackage,depends)
 		res=list(depends)
 
 	return selectedPackage,res

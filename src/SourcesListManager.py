@@ -10,22 +10,24 @@ class SourceConfigItem:
 		self.url_without_prefix=url.split('//')[1].split('/')[0]
 		self.dist=dist
 		self.channel=channel
-		self.repoFiles=dict()
+		self.repoFileManager=None
 	def getFilePath(self):
 		return '/var/lib/apt/lists/'+self.url_without_prefix+'_ubuntu_dists_'+self.dist+'_'+self.channel+"_binary-"+osInfo.arch+"_Packages"
+	def getRepoFileManager(self):
+		if self.repoFileManager is None:
+			repoPath=self.getFilePath()
+			self.repoFileManager=RepoFileManager.RepoFileManager(self.url,repoPath,osInfo.OSName,self.dist)
 	def getGitLink(self,name,arch):
 		#abandon
-		log.warning("abandon")
-		repoPath=self.getFilePath()
-		if repoPath not in self.repoFiles:
-			self.repoFiles[repoPath]=RepoFileManager.RepoFileManager(self.url,repoPath,osInfo.OSName,self.dist)
-		return self.repoFiles[repoPath].getGitLink(name)
+		self.getRepoFileManager()
+		return self.repoFileManager.getGitLink(name)
 	def getSpecificPackage(self,name,version,release)->SpecificPackage.SpecificPackage:
-		repoPath=self.getFilePath()
-		if repoPath not in self.repoFiles:
-			self.repoFiles[repoPath]=RepoFileManager.RepoFileManager(self.url,repoPath,osInfo.OSName,self.dist)
-		return self.repoFiles[repoPath].queryPackage(name,version,release)
-
+		self.getRepoFileManager()
+		return self.repoFileManager.queryPackage(name,version,release)
+	def getAllPackages(self):
+		self.getRepoFileManager()
+		return self.repoFileManager.getAllPackages()
+	
 def parseDEBTraditionalSources(data,binaryConfigItems,srcConfigItems):
 	for info in data:
 		info=info.split('#',1)[0].strip()
@@ -136,6 +138,11 @@ class SourcesListManager:
 			if specificPackage is not None:
 				return specificPackage
 		return None
+	def getAllPackages(self,dist):
+		res=[]
+		for configItem in self.binaryConfigItems[dist]:
+			res.extend(configItem.getAllPackages())
+		return res
 	#def getSpecificSrcPackage(self,name,dist,version,release)->SpecificPackage.SpecificPackage:
 	#	for configItem in self.srcConfigItems[dist]:
 	#		specificPackage=configItem.getSpecificPackage(name,version,release)

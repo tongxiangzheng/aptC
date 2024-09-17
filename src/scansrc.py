@@ -2,6 +2,9 @@ import osInfo
 import loadConfig
 import requests
 import RepoFileManager
+import SpecificPackage
+import SourcesListManager
+from subprocess import PIPE, Popen
 def postFile(file,aptConfigure:loadConfig.aptcConfigure):
 	try:
 		files = {'file': open(file, 'rb')}
@@ -50,7 +53,30 @@ def queryBuildInfo(srcFile,srcFile2,osType,osDist,arch,aptConfigure:loadConfig.a
 	else:
 		print(f'failed to query buildInfo: Request failed with status code {response.status_code}')
 		return None
-	
+def setInstalledPackagesStatus(sourcesListManager):
+	p = Popen("/usr/bin/apt list --installed", shell=True, stdout=PIPE, stderr=PIPE)
+	stdout, stderr = p.communicate()
+	data=stdout.decode().split('\n')
+	for info in data[1:]:
+		if len(info)==0:
+			continue
+		packageName=info.split('/',1)[0]
+		dists=info.split('/',1)[1].split(' ',1)[0].split(',')
+		dist=None
+		for d in dists:
+			if d!="now":
+				dist=d
+				break
+		if dist is None:
+			continue
+		version_release=info.split(' ')[1].split('-')
+		version=version_release[0].split(':')[-1]
+		release=None
+		if len(version_release)>1:
+			release=version_release[1]
+		package=sourcesListManager.getSpecificPackage(packageName,dist,version,release)
+		if package is not None:
+			package.status="installed"
 def scansrc(srcs):
 	if len(srcs)==1:
 		srcFile=srcs[0]
@@ -68,11 +94,34 @@ def scansrc(srcs):
 	if aptConfigure is None:
 		print('ERROR: cannot load config file in /etc/aptC/config.json, please check config file ')
 		return 1
-	buildInfos=queryBuildInfo(srcFile,srcFile2,osType,osDist,arch,aptConfigure)
-	if buildInfos is None:
+	buildInfo=queryBuildInfo(srcFile,srcFile2,osType,osDist,arch,aptConfigure)
+	if buildInfo is None:
 		return 1
-	for buildInfo in buildInfos:
-		buildInfo=buildInfo.split('\n')
-		print(buildInfo)
-		packages=RepoFileManager.parseDEBPackages(buildInfo,osType,osDist,"")
+	buildInfo=buildInfo.split('\n')
+	packages=RepoFileManager.parseDEBPackages(buildInfo,osType,osDist,"")
+	if len(packages)==0:
+		print("ERROR::failed to get package info: unknown fail")
+		return 1
+	sourcesListManager=SourcesListManager.SourcesListManager()
+	entryMap=SpecificPackage.EntryMap()
+	setInstalledPackagesStatus(sourcesListManager)
+	repoPackages=sourcesListManager.getAllPackages(osInfo.OSDist)
+	
+	for package in packages:
+		package.status="installed"
+		package.registerProvides(entryMap)
+	for package in repoPackages:
+		print(package.fullName,package.packageInfo.version)
+		package.registerProvides(entryMap)
+	
+	for package in repoPackages:
+		package.findRequires(entryMap)
+	for package in packages:
+		package.findRequires(entryMap)
+		depends=set()
+		SpecificPackage.getDependes(package,depends)
+		print(package.fullName)
+		depList=list(depends)
+		for dep in depList:
+			print(" "+dep.fullName)
 	return 0

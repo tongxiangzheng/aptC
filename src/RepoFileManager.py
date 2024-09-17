@@ -70,7 +70,7 @@ def parseDEBItemInfo(item):
         name=item
     return SpecificPackage.PackageEntry(name,flags,version,release)
 
-def parseDEBPackages(repoInfos,osType,dist,repoURL)->SpecificPackage:
+def parseDEBPackages(repoInfos,osType,dist,repoURL)->list:
 	fullName=""
 	name=""
 	version=""
@@ -84,6 +84,8 @@ def parseDEBPackages(repoInfos,osType,dist,repoURL)->SpecificPackage:
 	for i in range(len(repoInfos)):
 		info=repoInfos[i].strip()
 		if len(info)==0:
+			continue
+		if info.startswith("Package:"):
 			if name=="":
 				name=fullName
 			provides.append(SpecificPackage.PackageEntry(fullName,"EQ",version,release))
@@ -98,7 +100,7 @@ def parseDEBPackages(repoInfos,osType,dist,repoURL)->SpecificPackage:
 			arch=""
 			filename=""
 			source=""
-		if info.startswith("Package:"):
+
 			fullName=info.split(' ',1)[1]
 		if info.startswith("Source:"):
 			source=info.split(' ',1)[1]
@@ -122,6 +124,13 @@ def parseDEBPackages(repoInfos,osType,dist,repoURL)->SpecificPackage:
 					provides.append(parseDEBItemInfo(pInfo))
 		if info.startswith("Filename:"):
 			filename=info.split(' ',1)[1]
+	if name=="":
+		name=fullName
+	if name!="":
+		provides.append(SpecificPackage.PackageEntry(fullName,"EQ",version,release))
+		packageInfo=SpecificPackage.PackageInfo(osType,dist,name,version,release,arch)
+		res.append(SpecificPackage.SpecificPackage(packageInfo,fullName,provides,requires,arch,source,repoURL=repoURL,fileName=filename))
+	
 	return res
 
 def firstNumber(rawstr)->str:
@@ -164,4 +173,12 @@ class RepoFileManager:
 					if specificPackage.packageInfo.release is None or firstNumber(specificPackage.packageInfo.release)==release:
 						return specificPackage
 		return None
+	def getAllPackages(self):
+		if self.enable is False:
+			return []
+		res=[]
+		for packageList in self.packageMap.values():
+			res.extend(packageList)
+		return res
+		
 	
