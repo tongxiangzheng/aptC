@@ -2,15 +2,15 @@ import json
 import os
 import subprocess
 
-from Deb.Unpack import  extract_archive
+from Unpack import  extract_archive
 import numpy as  np
 
 import os
 import re
 
-from Utils.convertSbom import convertSpdx, convertCyclonedx,convertSpdx_Deb_syft11
-from Utils.extract import remove_file_extension
-from Utils.java.mavenAnalysis import AnalysisVariabele
+from spdx.Utils.convertSbom import convertSpdx, convertCyclonedx,convertSpdx_Deb_syft11
+from spdx.Utils.extract import remove_file_extension
+from spdx.Utils.java.mavenAnalysis import AnalysisVariabele
 from collections import defaultdict
 
 def is_source_code_file(filename):

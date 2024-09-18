@@ -88,9 +88,9 @@ def parseDEBPackages(repoInfos,osType,dist,repoURL)->list:
 		if info.startswith("Package:"):
 			if name=="":
 				name=fullName
-			provides.append(SpecificPackage.PackageEntry(fullName,"EQ",version,release))
-			packageInfo=SpecificPackage.PackageInfo(osType,dist,name,version,release,arch)
-			res.append(SpecificPackage.SpecificPackage(packageInfo,fullName,provides,requires,arch,source,repoURL=repoURL,fileName=filename))
+			if name!="":
+				packageInfo=SpecificPackage.PackageInfo(osType,dist,name,version,release,arch)
+				res.append(SpecificPackage.SpecificPackage(packageInfo,fullName,provides,requires,arch,source,repoURL=repoURL,fileName=filename))
 			fullName=""
 			name=""
 			version=""
@@ -127,7 +127,6 @@ def parseDEBPackages(repoInfos,osType,dist,repoURL)->list:
 	if name=="":
 		name=fullName
 	if name!="":
-		provides.append(SpecificPackage.PackageEntry(fullName,"EQ",version,release))
 		packageInfo=SpecificPackage.PackageInfo(osType,dist,name,version,release,arch)
 		res.append(SpecificPackage.SpecificPackage(packageInfo,fullName,provides,requires,arch,source,repoURL=repoURL,fileName=filename))
 	

@@ -103,6 +103,7 @@ def main(command,options,packages,genSpdx=True,saveSpdxPath=None,genCyclonedx=Fa
 						print(", ",end='')
 					print(packageName,end='')
 				print(" have cve:")
+				cves=set(cves)
 				for cve in cves:
 					print(" "+cve)
 	if assumeNo is True or dumpFileOnly is True:

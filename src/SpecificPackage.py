@@ -158,6 +158,7 @@ class Counter:
 		return self.cnt
 class SpecificPackage:
 	def __init__(self,packageInfo:PackageInfo,fullName:str,provides:list,requires:list,arch:str,source,status="uninstalled",repoURL=None,fileName=""):
+		provides.append(PackageEntry(fullName,"EQ",packageInfo.version,packageInfo.release))
 		self.packageInfo=packageInfo
 		self.fullName=fullName
 		self.providesInfo=provides
