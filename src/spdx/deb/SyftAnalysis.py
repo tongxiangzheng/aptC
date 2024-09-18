@@ -1,7 +1,7 @@
 import json
 import os
 import subprocess
-
+import normalize
 from Unpack import  extract_archive
 import numpy as  np
 

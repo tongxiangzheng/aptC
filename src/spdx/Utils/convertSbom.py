@@ -28,7 +28,7 @@ from spdx_tools.spdx.validation.validation_message import ValidationMessage
 from spdx_tools.spdx.writer.write_anything import write_file
 import uuid
 import  re
-
+import normalize
 #cyclonedx格式
 from typing import TYPE_CHECKING
 
@@ -642,7 +642,8 @@ def convertSpdx_Deb_syft11(syft_json, project_name, output_file, ExterDependenci
     name = source['name'].replace("/", "-")
     spdx = ''
     if type == 'directory':
-        projectStr = project_name.replace("/", "-").replace("_", "-").replace("@", "").replace("+", "-")
+        projectStr = normalize.normalReplace(project_name)
+        # projectStr = project_name.replace("/", "-").replace("_", "-").replace("@", "").replace("+", "-")
         spdx = f"SPDXRef-DocumentRoot-Directory-{projectStr}"
     elif type == 'file':
         spdx = f"SPDXRef-DocumentRoot-File-{name}"
@@ -675,7 +676,8 @@ def convertSpdx_Deb_syft11(syft_json, project_name, output_file, ExterDependenci
             accessPath = location['accessPath']
             annotations = location['annotations']
         licenses = artifact['licenses']
-        tempName = artifact['name'].replace("_", "-").replace("@", "").replace("/", "-").replace("+", "-")
+        tempName = normalize.normalReplace(artifact['name'])
+        # tempName = artifact['name'].replace("_", "-").replace("@", "").replace("/", "-").replace("+", "-")
         spdx_id_result = f"SPDXRef-Package-{artifact['type']}---{tempName}-{uuid.uuid4()}"
         id = artifact['id']
         id_spdxId[id] = spdx_id_result
@@ -756,7 +758,8 @@ def convertSpdx_Deb_syft11(syft_json, project_name, output_file, ExterDependenci
             fileName = location['path']
             if fileName[0] == "/":
                 fileNameResult = '.' + fileName
-            spdxId = fileName.replace("/", "-").replace("_", "-").replace("@", "").replace("+", "-")
+            spdxId = normalize.normalReplace(fileName)
+            # spdxId = fileName.replace("/", "-").replace("_", "-").replace("@", "").replace("+", "-")
             spdxId_result = f"SPDXRef-File--{spdxId}-{uuid.uuid4()}"
             id = file['id']
             id_spdxId[id] = spdxId_result
