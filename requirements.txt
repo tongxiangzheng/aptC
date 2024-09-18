@@ -3,7 +3,6 @@ pycurl
 certifi
 wget
 lz4
-magic
 packaging
 rarfile
 spdx-tools

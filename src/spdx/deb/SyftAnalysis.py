@@ -8,7 +8,7 @@ import numpy as  np
 import os
 import re
 
-from Utils.convertSbom import convertSpdx, convertCyclonedx
+from Utils.convertSbom import convertSpdx, convertCyclonedx,convertSpdx_Deb_syft11
 from Utils.extract import remove_file_extension
 from Utils.java.mavenAnalysis import AnalysisVariabele
 from collections import defaultdict
@@ -42,6 +42,7 @@ def find_folder_with_control_file(folder_path):
 # base_path = '/home/jiliqiang/SCA_Code/Deb_package_src'
 
 syft_path = '/home/jiliqiang/SCA_Tools/Syft/./syft'
+syft_path11 = '/usr/share/aptC/spdx/syft11/syft'
 #syft_path = '/home/jiliqiang/SCA_Tools/Syft/syft_1.4.1/./syft'
 # extract_dir = "/home/jiliqiang/Rpm_Deb/Deb/Deb_exact"
 def Extract(base_path,extract_dir):
@@ -191,7 +192,7 @@ def findExterDependency(scan_path):
 #scan_path 是扫描项目的路径，deb源码包
 #output_file 指定要保存的文件路径
 #这里输入的是deb源码包解压后的文件夹，输出的是sbom
-def Scan(scan_path,output_file,sbomType):
+def Scan(scan_path,output_file,ExterDependencies,sbomType):
     #project_name= remove_file_extension(scan_path)
     project_name = scan_path
     #键是变量${xx},值是解析出来的具体数字
@@ -201,7 +202,7 @@ def Scan(scan_path,output_file,sbomType):
     variableList=[]
     matrix=np.zeros((1024,1024))
     #生成syft普通json
-    command_syft = f"{syft_path} scan  {scan_path} -o json"
+    command_syft = f"{syft_path11} scan  {scan_path} -o json"
     syft_output = subprocess.check_output(command_syft,shell=True)
     syft_json = json.loads(syft_output.decode())
     # tempath = scan_path+'-syft.json'
@@ -283,9 +284,9 @@ def Scan(scan_path,output_file,sbomType):
         json_string =json.dumps(syft_json,indent=4, separators=(',', ': '))
         f.write(json_string)
     #处理外部依赖
-    ExterDependencies = findExterDependency(scan_path)
+    # ExterDependencies = findExterDependency(scan_path)
     if sbomType=='spdx':
-        convertSpdx(syft_json,project_name,output_file,ExterDependencies)
+        convertSpdx_Deb_syft11(syft_json,project_name,output_file,ExterDependencies)
     if sbomType == 'cyclonedx':
         convertCyclonedx(syft_json, project_name, output_file, ExterDependencies)
     #生成cyclonedx的json

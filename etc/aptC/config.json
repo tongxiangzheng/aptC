@@ -1,5 +1,7 @@
 {
 	"server":{
-		"url":"http://192.168.5.61:8342/querycve/"
+		"querycve":"http://192.168.5.61:8342/querycve/",
+		"postfile":"http://192.168.5.61:8342/deb/postfile/",
+		"querybuildinfo":"http://192.168.5.61:8342/deb/querybuildinfo/"
 	}
 }

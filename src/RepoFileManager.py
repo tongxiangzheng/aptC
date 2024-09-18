@@ -2,10 +2,7 @@ import os
 
 import lz4.frame
 
-from SpecificPackage import *
-
-
-
+import SpecificPackage
 
 def parseDEBItemInfo(item):
     item=item.strip()
@@ -71,9 +68,9 @@ def parseDEBItemInfo(item):
         # To illustrate: 0.1 < 0.1 evaluates to true.
     else:
         name=item
-    return PackageEntry(name,flags,version,release)
+    return SpecificPackage.PackageEntry(name,flags,version,release)
 
-def parseDEBPackages(repoInfos,osType,dist,repoURL,repoFileManager)->SpecificPackage:
+def parseDEBPackages(repoInfos,osType,dist,repoURL)->list:
 	fullName=""
 	name=""
 	version=""
@@ -87,11 +84,13 @@ def parseDEBPackages(repoInfos,osType,dist,repoURL,repoFileManager)->SpecificPac
 	for i in range(len(repoInfos)):
 		info=repoInfos[i].strip()
 		if len(info)==0:
+			continue
+		if info.startswith("Package:"):
 			if name=="":
 				name=fullName
-			provides.append(PackageEntry(fullName,"EQ",version,release))
-			packageInfo=PackageInfo(osType,dist,name,version,release,arch)
-			res.append(SpecificPackage(packageInfo,fullName,provides,requires,arch,source,repoURL=repoURL,fileName=filename))
+			provides.append(SpecificPackage.PackageEntry(fullName,"EQ",version,release))
+			packageInfo=SpecificPackage.PackageInfo(osType,dist,name,version,release,arch)
+			res.append(SpecificPackage.SpecificPackage(packageInfo,fullName,provides,requires,arch,source,repoURL=repoURL,fileName=filename))
 			fullName=""
 			name=""
 			version=""
@@ -101,7 +100,7 @@ def parseDEBPackages(repoInfos,osType,dist,repoURL,repoFileManager)->SpecificPac
 			arch=""
 			filename=""
 			source=""
-		if info.startswith("Package:"):
+
 			fullName=info.split(' ',1)[1]
 		if info.startswith("Source:"):
 			source=info.split(' ',1)[1]
@@ -113,16 +112,25 @@ def parseDEBPackages(repoInfos,osType,dist,repoURL,repoFileManager)->SpecificPac
 				release=version_release[1]
 		if info.startswith("Architecture:"):
 			arch=info.split(' ',1)[1]
-		if info.startswith("Depends:"):
-			depInfos=info.split(' ',1)[1].split("|")
+		if info.startswith("Depends:") or info.startswith("Pre-Depends:") or info.startswith("Recommends:"):
+			depInfos=info.split(' ',1)[1].split(",")
 			for depInfo in depInfos:
-				requires.append(parseDEBItemInfo(depInfo))
+				for dInfo in depInfo.split('|'):
+					requires.append(parseDEBItemInfo(dInfo))
 		if info.startswith("Provides:"):
-			proInfos=info.split(' ',1)[1].split("|")
+			proInfos=info.split(' ',1)[1].split(",")
 			for proInfo in proInfos:
-				provides.append(parseDEBItemInfo(proInfo))
+				for pInfo in proInfo.split('|'):
+					provides.append(parseDEBItemInfo(pInfo))
 		if info.startswith("Filename:"):
 			filename=info.split(' ',1)[1]
+	if name=="":
+		name=fullName
+	if name!="":
+		provides.append(SpecificPackage.PackageEntry(fullName,"EQ",version,release))
+		packageInfo=SpecificPackage.PackageInfo(osType,dist,name,version,release,arch)
+		res.append(SpecificPackage.SpecificPackage(packageInfo,fullName,provides,requires,arch,source,repoURL=repoURL,fileName=filename))
+	
 	return res
 
 def firstNumber(rawstr)->str:
@@ -138,23 +146,39 @@ class RepoFileManager:
 	def __init__(self,url,repoPath,osType,dist):
 		self.url=url
 		self.repoPath=repoPath
-		self.packageMap=defaultdict(defaultNoneList)
-		try:
+		self.packageMap=SpecificPackage.defaultdict(SpecificPackage.defaultNoneList)
+		self.enable=True
+		if os.path.isfile(repoPath):
 			with open(repoPath,"r") as f:
 				data=f.readlines()
-		except Exception:
+		elif os.path.isfile(repoPath+".lz4"):
 			with open(repoPath+".lz4","rb") as f:
 				data=f.read()
 				data = lz4.frame.decompress(data).decode().split('\n')
-		packages=parseDEBPackages(data,osType,dist,url,self)
+		else:
+			self.enable=False
+			return
+		packages=parseDEBPackages(data,osType,dist,url)
 		for package in packages:
 			self.packageMap[package.fullName].append(package)
 	def queryPackage(self,name,version,release):
+		if self.enable is False:
+			return None
 		version=firstNumber(version)
-		release=firstNumber(release)
+		if release is not None:
+			release=firstNumber(release)
 		if name in self.packageMap:
 			for specificPackage in self.packageMap[name]:
-				if firstNumber(specificPackage.packageInfo.version)==version and firstNumber(specificPackage.packageInfo.release)==release:
-					return specificPackage
+				if firstNumber(specificPackage.packageInfo.version)==version:
+					if specificPackage.packageInfo.release is None or firstNumber(specificPackage.packageInfo.release)==release:
+						return specificPackage
 		return None
+	def getAllPackages(self):
+		if self.enable is False:
+			return []
+		res=[]
+		for packageList in self.packageMap.values():
+			res.extend(packageList)
+		return res
+		
 	
