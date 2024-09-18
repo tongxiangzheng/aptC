@@ -5,6 +5,7 @@ import RepoFileManager
 import SpecificPackage
 import SourcesListManager
 import normalize
+import PackageInfo
 from subprocess import PIPE, Popen
 import shutil
 import os
@@ -56,10 +57,16 @@ def queryBuildInfo(srcFile,srcFile2,osType,osDist,arch,aptConfigure:loadConfig.a
 	else:
 		print(f'failed to query buildInfo: Request failed with status code {response.status_code}')
 		return None
-def setInstalledPackagesStatus(sourcesListManager):
+def getSpecificInstalledPackage(packageName):
+	p = Popen(f"apt-cache show {packageName}", shell=True, stdout=PIPE, stderr=PIPE)
+	stdout, stderr = p.communicate()
+	data=stdout.decode().split('\n')
+	return RepoFileManager.parseDEBPackages(data,osInfo.OSName,osInfo.OSDist,None)
+def setInstalledPackagesStatus(sourcesListManager:SourcesListManager.SourcesListManager):
 	p = Popen("/usr/bin/apt list --installed", shell=True, stdout=PIPE, stderr=PIPE)
 	stdout, stderr = p.communicate()
 	data=stdout.decode().split('\n')
+	res=[]
 	for info in data[1:]:
 		if len(info)==0:
 			continue
@@ -80,6 +87,9 @@ def setInstalledPackagesStatus(sourcesListManager):
 		package=sourcesListManager.getSpecificPackage(packageName,dist,version,release)
 		if package is not None:
 			package.status="installed"
+		else:
+			res.append(getSpecificInstalledPackage(packageName))
+	return res
 def scansrc(srcs):
 	if len(srcs)==1:
 		srcFile=srcs[0]
@@ -107,8 +117,8 @@ def scansrc(srcs):
 		return 1
 	sourcesListManager=SourcesListManager.SourcesListManager()
 	entryMap=SpecificPackage.EntryMap()
-	setInstalledPackagesStatus(sourcesListManager)
 	repoPackages=sourcesListManager.getAllPackages()
+	repoPackages.extend(setInstalledPackagesStatus(sourcesListManager))
 	
 	for package in packages:
 		package.status="installed"
@@ -127,7 +137,8 @@ def scansrc(srcs):
 		for p in depset:
 			depends[p.packageInfo.name+'@'+p.packageInfo.version]=p.packageInfo.dumpAsDict()
 		dependsList=list(depends.values())
-		print(normalize.normalReplace(package.fullName))
+		if not os.path.exists("/tmp/aptC/"):
+			os.makedirs("/tmp/aptC/")
 		srcPath=os.path.join("/tmp/aptC/",normalize.normalReplace(os.path.abspath(srcFile)))
 		print(srcPath)
 		shutil.copyfile(srcFile,srcPath)
