@@ -119,11 +119,9 @@ def scansrc(srcs):
 	for package in repoPackages:
 		package.findRequires(entryMap)
 	for package in packages:
-		print(package.fullName)
 		package.findRequires(entryMap)
 	for package in packages:
 		depset=set()
-		print(package.fullName)
 		SpecificPackage.getDependes(package,depset)
 		depends=dict()
 		for p in depset:
