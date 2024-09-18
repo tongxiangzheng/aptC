@@ -4,7 +4,11 @@ import requests
 import RepoFileManager
 import SpecificPackage
 import SourcesListManager
+import normalize
 from subprocess import PIPE, Popen
+import shutil
+import os
+from spdx.sourcemain import srcmain
 def postFile(file,aptConfigure:loadConfig.aptcConfigure):
 	try:
 		files = {'file': open(file, 'rb')}
@@ -44,7 +48,6 @@ def queryBuildInfo(srcFile,srcFile2,osType,osDist,arch,aptConfigure:loadConfig.a
 		print(f'failed to query buildInfo: {e}')
 	if response.status_code == 200:
 		data=response.json()
-		print(data)
 		if data['error']==0:
 			return data['buildinfo']
 		else:
@@ -105,23 +108,31 @@ def scansrc(srcs):
 	sourcesListManager=SourcesListManager.SourcesListManager()
 	entryMap=SpecificPackage.EntryMap()
 	setInstalledPackagesStatus(sourcesListManager)
-	repoPackages=sourcesListManager.getAllPackages(osInfo.OSDist)
+	repoPackages=sourcesListManager.getAllPackages()
 	
 	for package in packages:
 		package.status="installed"
 		package.registerProvides(entryMap)
 	for package in repoPackages:
-		print(package.fullName,package.packageInfo.version)
 		package.registerProvides(entryMap)
 	
 	for package in repoPackages:
 		package.findRequires(entryMap)
 	for package in packages:
-		package.findRequires(entryMap)
-		depends=set()
-		SpecificPackage.getDependes(package,depends)
 		print(package.fullName)
-		depList=list(depends)
-		for dep in depList:
-			print(" "+dep.fullName)
+		package.findRequires(entryMap)
+	for package in packages:
+		depset=set()
+		print(package.fullName)
+		SpecificPackage.getDependes(package,depset)
+		depends=dict()
+		for p in depset:
+			depends[p.packageInfo.name+'@'+p.packageInfo.version]=p.packageInfo.dumpAsDict()
+		dependsList=list(depends.values())
+		print(normalize.normalReplace(package.fullName))
+		srcPath=os.path.join("/tmp/aptC/",normalize.normalReplace(os.path.abspath(srcFile)))
+		print(srcPath)
+		shutil.copyfile(srcFile,srcPath)
+		srcmain(normalize.normalReplace(package.fullName),srcPath,dependsList,'spdx',".")
+		print("generate SPOM for "+package.fullName)
 	return 0

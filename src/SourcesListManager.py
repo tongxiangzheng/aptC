@@ -138,10 +138,11 @@ class SourcesListManager:
 			if specificPackage is not None:
 				return specificPackage
 		return None
-	def getAllPackages(self,dist):
+	def getAllPackages(self):
 		res=[]
-		for configItem in self.binaryConfigItems[dist]:
-			res.extend(configItem.getAllPackages())
+		for binaryConfigItem in self.binaryConfigItems.values():
+			for configItem in binaryConfigItem:
+				res.extend(configItem.getAllPackages())
 		return res
 	#def getSpecificSrcPackage(self,name,dist,version,release)->SpecificPackage.SpecificPackage:
 	#	for configItem in self.srcConfigItems[dist]:
