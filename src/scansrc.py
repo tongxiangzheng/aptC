@@ -9,6 +9,7 @@ import PackageInfo
 from subprocess import PIPE, Popen
 import shutil
 import os
+import tarfile
 from spdx.sourcemain import srcmain
 def postFile(file,aptConfigure:loadConfig.aptcConfigure):
 	try:
@@ -90,7 +91,21 @@ def setInstalledPackagesStatus(sourcesListManager:SourcesListManager.SourcesList
 		else:
 			res.append(getSpecificInstalledPackage(packageName))
 	return res
-def scansrc(srcs):
+def unzip(zipfile,toPath):
+	with tarfile.open(zipfile) as f:
+		f.extractall(toPath)
+		return f.getmembers()[0].name
+def extractSrc(srcFile,srcFile2,distPath):
+	projectName=unzip(srcFile,distPath)
+	projectPath=os.path.join(distPath,projectName)
+	if srcFile2:
+		unzip(srcFile2,projectPath)
+	return projectPath
+def scansrc(srcs,options):
+	mode="merge"
+	for option in options:
+		if option.startswith('-mode='):
+			mode=option.split('=',1)[1]
 	if len(srcs)==1:
 		srcFile=srcs[0]
 		srcFile2=None
@@ -98,7 +113,7 @@ def scansrc(srcs):
 		srcFile=srcs[0]
 		srcFile2=srcs[1]
 	else:
-		print("usage: apt scansrc <src> or apt scansrc <orig> <patch>")
+		print("usage: apt scansrc <src> [-mode=merge|split] or apt scansrc <orig> <patch> [-mode=merge|split]")
 		return 0
 	osType=osInfo.OSName
 	osDist=osInfo.OSDist
@@ -130,18 +145,28 @@ def scansrc(srcs):
 		package.findRequires(entryMap)
 	for package in packages:
 		package.findRequires(entryMap)
-	for package in packages:
+	if not os.path.exists("/tmp/aptC/"):
+		os.makedirs("/tmp/aptC/")
+	srcPath=extractSrc(srcFile,srcFile2,"/tmp/aptC/")
+	if mode=="merge":
 		depset=set()
-		SpecificPackage.getDependes(package,depset)
+		for package in packages:
+			SpecificPackage.getDependes(package,depset)
 		depends=dict()
 		for p in depset:
 			depends[p.packageInfo.name+'@'+p.packageInfo.version]=p.packageInfo.dumpAsDict()
 		dependsList=list(depends.values())
-		if not os.path.exists("/tmp/aptC/"):
-			os.makedirs("/tmp/aptC/")
-		srcPath=os.path.join("/tmp/aptC/",normalize.normalReplace(os.path.abspath(srcFile)))
-		print(srcPath)
-		shutil.copyfile(srcFile,srcPath)
-		srcmain(normalize.normalReplace(package.fullName),srcPath,dependsList,'spdx',".")
-		print("generate SPOM for "+package.fullName)
+		name=os.path.basename(srcPath)
+		srcmain(normalize.normalReplace(name),srcPath,dependsList,'spdx',".")
+		print("generate SPOM for "+name)
+	else:
+		for package in packages:
+			depset=set()
+			SpecificPackage.getDependes(package,depset)
+			depends=dict()
+			for p in depset:
+				depends[p.packageInfo.name+'@'+p.packageInfo.version]=p.packageInfo.dumpAsDict()
+			dependsList=list(depends.values())
+			srcmain(normalize.normalReplace(package.fullName),srcPath,dependsList,'spdx',".")
+			print("generate SPOM for "+package.fullName)
 	return 0
