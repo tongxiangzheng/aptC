@@ -2,8 +2,7 @@ FROM ubuntu:latest as packager
 
 WORKDIR /app/aptc-1.0
 
-RUN apt update
-RUN apt install -y dh-make
+RUN apt update && apt install -y dh-make
 
 COPY bin /app/aptc-1.0/bin
 COPY etc /app/aptc-1.0/etc

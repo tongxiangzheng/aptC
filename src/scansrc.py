@@ -20,6 +20,7 @@ def postFile(file,aptConfigure:loadConfig.aptcConfigure):
 		return None
 	except Exception as e:
 		print(f'failed to upload file: {e}')
+		return None
 	if response.status_code == 200:
 		data=response.json()
 		if data['error']==0:
@@ -42,6 +43,7 @@ def queryBuildInfo(srcFile,srcFile2,osType,osDist,arch,aptConfigure:loadConfig.a
 			return None
 	try:
 		data={"srcFile":src1token,"srcFile2":src2token,"osType":osType,"osDist":osDist,"arch":arch}
+		print("waiting build from server... It may take some time.")
 		response = requests.post(aptConfigure.querybuildinfoURL, json=data)
 	except requests.exceptions.ConnectionError as e:
 		print("failed to query buildInfo: Unable to connect: "+aptConfigure.querybuildinfoURL)
@@ -95,7 +97,18 @@ def unzip(zipfile,toPath):
 	with tarfile.open(zipfile) as f:
 		f.extractall(toPath)
 		return f.getmembers()[0].name
+def remove_folder(path):
+    if os.path.exists(path):
+        if os.path.isfile(path) or os.path.islink(path):
+            os.remove(path)
+        else:
+            for filename in os.listdir(path):
+                remove_folder(os.path.join(path, filename))
+            os.rmdir(path)
 def extractSrc(srcFile,srcFile2,distPath):
+	if os.path.exists("/tmp/aptC/extract"):
+		remove_folder(distPath)
+	os.makedirs("/tmp/aptC/extract")
 	projectName=unzip(srcFile,distPath)
 	projectPath=os.path.join(distPath,projectName)
 	if srcFile2:
@@ -145,9 +158,7 @@ def scansrc(srcs,options):
 		package.findRequires(entryMap)
 	for package in packages:
 		package.findRequires(entryMap)
-	if not os.path.exists("/tmp/aptC/"):
-		os.makedirs("/tmp/aptC/")
-	srcPath=extractSrc(srcFile,srcFile2,"/tmp/aptC/")
+	srcPath=extractSrc(srcFile,srcFile2,"/tmp/aptC/extract/")
 	if mode=="merge":
 		depset=set()
 		for package in packages:

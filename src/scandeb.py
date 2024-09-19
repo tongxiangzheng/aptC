@@ -78,13 +78,12 @@ def scandeb(command,options,packages,genSpdx=True,saveSpdxPath=None,genCyclonedx
 		with open(spdxPath,"r") as f:
 			spdxObj=json.load(f)
 		cves=queryCVE(spdxObj,aptConfigure)
-		
 		selectedPackage_cves=cves[selectedPackage.packageInfo.name]
-		for projectName,cves in cves.items():
-			if len(cves)==0:
+		for projectName,c in cves.items():
+			if len(c)==0:
 				continue
 			if projectName not in project_packages:
-				selectedPackage_cves.extend(cves)
+				selectedPackage_cves.extend(c)
 		cves[selectedPackage.packageInfo.name]=selectedPackage_cves
 
 		for projectName,cves in cves.items():

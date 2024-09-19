@@ -2,6 +2,8 @@ import os
 import SpecificPackage
 import SourcesListManager
 from subprocess import PIPE, Popen
+import osInfo
+import RepoFileManager
 from loguru import logger as log
 def getSelfDist():
 	with open("/etc/os-release") as f:
@@ -28,6 +30,11 @@ def parseInstallInfo(info:str,sourcesListManager:SourcesListManager.SourcesListM
 	specificPackage=sourcesListManager.getSpecificPackage(name,dist,version,release)
 	specificPackage.setGitLink()
 	return specificPackage
+def getSpecificInstalledPackage(packageName):
+	p = Popen(f"apt-cache show {packageName}", shell=True, stdout=PIPE, stderr=PIPE)
+	stdout, stderr = p.communicate()
+	data=stdout.decode().split('\n')
+	return RepoFileManager.parseDEBPackages(data,osInfo.OSName,osInfo.OSDist,None)
 def getInstalledPackagesInfo(sourcesListManager):
 	res=[]
 	p = Popen("/usr/bin/apt list --installed", shell=True, stdout=PIPE, stderr=PIPE)
@@ -51,6 +58,11 @@ def getInstalledPackagesInfo(sourcesListManager):
 		if len(version_release)>1:
 			release=version_release[1]
 		package=sourcesListManager.getSpecificPackage(packageName,dist,version,release)
+		if package is not None:
+			package.status="installed"
+			res.append(package)
+		else:
+			res.append(getSpecificInstalledPackage(packageName))
 		if package is not None:
 			res.append(package)
 	return res
@@ -84,6 +96,7 @@ def getNewInstall(packageName:str,options,sourcesListManager:SourcesListManager.
 	if len(res)==0:
 		return None,[]
 	selectedPackage=None
+	packageName=packageName.split('=',1)[0]
 	for p in res:
 		if p.fullName==packageName:
 			selectedPackage=p
