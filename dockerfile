@@ -1,4 +1,4 @@
-FROM ubuntu:latest as packager
+FROM ubuntu:latest AS packager
 
 WORKDIR /app/aptc-1.0
 
@@ -12,5 +12,5 @@ COPY makefile /app/aptc-1.0/makefile
 
 RUN dpkg-buildpackage -us -uc
 
-FROM scratch as deb_package
+FROM scratch AS deb_package
 COPY --from=packager /app/aptc_1.0_all.deb /
