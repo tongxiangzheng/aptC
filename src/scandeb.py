@@ -17,14 +17,15 @@ def queryCVE(spdxObj,aptConfigure:loadConfig.aptcConfigure):
 		response = requests.post(url, json=spdxObj)
 	except requests.exceptions.ConnectionError as e:
 		print("failed to query CVE: Unable to connect: "+url)
-		return {}
+		return None
 	except Exception as e:
 		print(f'failed to query CVE: {e}')
+		return None
 	if response.status_code == 200:
 		return response.json()
 	else:
 		print(f'failed to query CVE: Request failed with status code {response.status_code}')
-		return {}
+		return None
 def scandeb(command,options,packages,genSpdx=True,saveSpdxPath=None,genCyclonedx=False,saveCyclonedxPath=None,dumpFileOnly=False):
 	assumeNo=False
 	noPackagesWillInstalled=True
@@ -78,6 +79,8 @@ def scandeb(command,options,packages,genSpdx=True,saveSpdxPath=None,genCyclonedx
 		with open(spdxPath,"r") as f:
 			spdxObj=json.load(f)
 		cves=queryCVE(spdxObj,aptConfigure)
+		if cves is None:
+			continue
 		selectedPackage_cves=cves[selectedPackage.packageInfo.name]
 		for projectName,c in cves.items():
 			if len(c)==0:
