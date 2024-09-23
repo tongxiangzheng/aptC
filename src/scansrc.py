@@ -116,9 +116,21 @@ def extractSrc(srcFile,srcFile2,distPath):
 	return projectPath
 def scansrc(srcs,options):
 	mode="merge"
+	genSpdx=False
+	spdxPath='.'
+	genCyclonedx=False
+	cyclonedxPath='.'
 	for option in options:
 		if option.startswith('-mode='):
 			mode=option.split('=',1)[1]
+		if option.startswith('--genspdx='):
+			genSpdx=True
+			spdxPath=option.split('=',1)[1]
+		if option.startswith('--gencyclonedx='):
+			genCyclone=True
+			cyclonePath=option.split('=',1)[1]
+	if spdxPath is False and cyclonePath is False:
+		spdxPath=True
 	if len(srcs)==1:
 		srcFile=srcs[0]
 		srcFile2=None
@@ -168,7 +180,11 @@ def scansrc(srcs,options):
 			depends[p.packageInfo.name+'@'+p.packageInfo.version]=p.packageInfo.dumpAsDict()
 		dependsList=list(depends.values())
 		name=os.path.basename(srcPath)
-		srcmain(normalize.normalReplace(name),srcPath,dependsList,'spdx',".")
+		if genSpdx is True:
+			srcmain(normalize.normalReplace(name),srcPath,dependsList,'spdx',spdxPath)
+		if genCyclonedx is True:
+			srcmain(normalize.normalReplace(name),srcPath,dependsList,'cyclonedx',cyclonedxPath)
+
 		print("generate SPOM for "+name)
 	else:
 		for package in packages:

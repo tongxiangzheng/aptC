@@ -129,7 +129,10 @@ def parseDEBPackages(repoInfos,osType,dist,repoURL)->list:
 	if name!="":
 		packageInfo=SpecificPackage.PackageInfo(osType,dist,name,version,release,arch)
 		res.append(SpecificPackage.SpecificPackage(packageInfo,fullName,provides,requires,arch,source,repoURL=repoURL,fileName=filename))
-	
+	# for r in res:
+	# 	if r.packageInfo.release is None:
+	# 		continue
+	# 	print(r.packageInfo.name,r.fullName,r.packageInfo.version,r.packageInfo.release)
 	return res
 
 def firstNumber(rawstr)->str:
