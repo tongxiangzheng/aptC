@@ -1,9 +1,10 @@
 import sys
 import os
+DIR=os.path.split(os.path.abspath(__file__))[0]
+sys.path.insert(0,os.path.join(DIR,'..','src'))
+import aptC
 def autotest_deb(name,version,release):
-	cmd=f"python ../src/aptC.py genspdx {name}={version}-{release} ./binary"
-	print(cmd)
-	os.system(cmd)
+	aptC.user_main("apt",["genspdx",f"{name}={version}-{release}","binary"], exit_code=False)
 
 def autotest_src(name,version,release):
 	dscLink=f"http://archive.ubuntu.com/ubuntu/pool/main/{name[0]}/{name}/{name}_{version}-{release}.dsc"
@@ -43,5 +44,4 @@ for info in data:
 	version=info[2].strip()
 	release=info[3].strip()
 	autotest_deb(name,version,release)
-	autotest_src(name,version,release)
-	break
+	#autotest_src(name,version,release)

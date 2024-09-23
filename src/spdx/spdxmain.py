@@ -58,9 +58,9 @@ def getExternalDependencies(dependsList):
 		)
 		ExternalDependencies.append(Dependency)
 		#print("require:",require)
-		print("name:",name)
-		print("version",version)
-		print('gitLink',gitLink)
+		#print("name:",name)
+		#print("version",version)
+		#print('gitLink',gitLink)
 		#print('purl',purl)
 
 	return ExternalDependencies
