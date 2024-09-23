@@ -96,21 +96,19 @@ def setInstalledPackagesStatus(sourcesListManager:SourcesListManager.SourcesList
 def unzip(zipfile,toPath):
 	with tarfile.open(zipfile) as f:
 		f.extractall(toPath)
-		return f.getmembers()[0].name
-def remove_folder(path):
-    if os.path.exists(path):
-        if os.path.isfile(path) or os.path.islink(path):
-            os.remove(path)
-        else:
-            for filename in os.listdir(path):
-                remove_folder(os.path.join(path, filename))
-            os.rmdir(path)
+
 def extractSrc(srcFile,srcFile2,distPath):
-	if os.path.exists("/tmp/aptC/extract"):
-		remove_folder(distPath)
-	os.makedirs("/tmp/aptC/extract")
-	projectName=unzip(srcFile,distPath)
-	projectPath=os.path.join(distPath,projectName)
+	if os.path.exists(distPath):
+		shutil.rmtree(distPath)
+	os.makedirs(distPath)
+	unzip(srcFile,distPath)
+	projectPath=None
+	for item in os.listdir(distPath):
+		if os.path.isdir(os.path.join(distPath,item)):
+			projectPath=os.path.join(distPath,item)
+	if projectPath is None:
+		print("error:unzip unknown error")
+		return None
 	if srcFile2:
 		unzip(srcFile2,projectPath)
 	return projectPath
@@ -171,6 +169,8 @@ def scansrc(srcs,options):
 	for package in packages:
 		package.findRequires(entryMap)
 	srcPath=extractSrc(srcFile,srcFile2,"/tmp/aptC/extract/")
+	if srcPath is None:
+		return 1
 	if mode=="merge":
 		depset=set()
 		for package in packages:
