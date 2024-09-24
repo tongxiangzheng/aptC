@@ -3,7 +3,8 @@ import json
 import spdxReader
 for file in os.listdir("./src"):
 	if not os.path.isfile("./binary/"+file):
-		print(file+"not in binary")
+		print("")
+		print(file+" not in binary")
 		continue
 	srcres=dict()
 	binres=dict()
