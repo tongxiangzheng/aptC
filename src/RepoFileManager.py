@@ -106,7 +106,7 @@ def parseDEBPackages(repoInfos,osType,dist,repoURL)->list:
 			source=info.split(' ',1)[1]
 			name=info.split(' ',2)[1]
 		if info.startswith("Version:"):
-			version_release=info.split(' ',1)[1].split('-')
+			version_release=info.split(' ',1)[1].rsplit('-',1)
 			version=version_release[0].split(':')[-1]
 			if len(version_release)>1:
 				release=version_release[1]

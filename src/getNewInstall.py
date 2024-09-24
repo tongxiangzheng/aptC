@@ -19,7 +19,7 @@ def parseInstallInfo(info:str,sourcesListManager:SourcesListManager.SourcesListM
 	info=info.strip().split(' ',2)
 	name=info[1]
 	additionalInfo=info[2].split(']')[-2].strip()[1:].split(' ')
-	version_release=additionalInfo[0].split('-')
+	version_release=additionalInfo[0].rsplit('-',1)
 	version=version_release[0].split(':')[-1]
 	release=None
 	if len(version_release)>1:
@@ -27,6 +27,7 @@ def parseInstallInfo(info:str,sourcesListManager:SourcesListManager.SourcesListM
 	dist=additionalInfo[1].split('/')[1].split(',')[0]
 	#arch=additionalInfo[-1][1:-1]
 	#packageInfo=PackageInfo.PackageInfo('Ubuntu',dist,name,version,release,arch)
+	#print(name,dist,version,release)
 	specificPackage=sourcesListManager.getSpecificPackage(name,dist,version,release)
 	specificPackage.setGitLink()
 	return specificPackage
@@ -52,7 +53,7 @@ def getInstalledPackagesInfo(sourcesListManager):
 				break
 		if dist is None:
 			continue
-		version_release=info.split(' ')[1].split('-')
+		version_release=info.split(' ')[1].rsplit('-',1)
 		version=version_release[0].split(':')[-1]
 		release=None
 		if len(version_release)>1:
@@ -94,6 +95,7 @@ def getNewInstall(packageName:str,options,sourcesListManager:SourcesListManager.
 		if info.startswith('Inst '):
 			res.append(parseInstallInfo(info,sourcesListManager))
 	if len(res)==0:
+		print("warning: no package will install")
 		return None,[]
 	selectedPackage=None
 	packageName=packageName.split('=',1)[0]

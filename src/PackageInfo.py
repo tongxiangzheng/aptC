@@ -10,12 +10,13 @@ class PackageInfo:
 		id=version.find('p')
 		if id==-1:
 			self.update=None
-			self.version=version
+			self.version=version.split(':')[-1]
 		else:
 			self.update=version[id:]
-			self.version=version[0:id]
+			self.version=version[0:id].split(':')[-1]
 			#print(version,self.version,self.update)
 		self.release=release
+		self.version=version
 	def dump(self):
 		info={'osType':self.osType,'dist':self.dist,'name':self.name,'version':self.version,'release':self.release}
 		if self.update is not None:

@@ -34,7 +34,10 @@ def downloadFile(url,filePath,fileName)->str:
 		os.makedirs(filePath)
 	filePath=os.path.join(filePath,fileName)
 	if not os.path.isfile(filePath):
-		wget.download(url,filePath,bar=bar_progress)
+		try:
+			wget.download(url,filePath,bar=bar_progress)
+		except Exception:
+			return None
 	return filePath
 
 def sendObject(s,info):

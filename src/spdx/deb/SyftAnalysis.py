@@ -1,6 +1,6 @@
 import json
 import os
-import subprocess
+from subprocess import PIPE, Popen
 import normalize
 from Unpack import  extract_archive
 import numpy as  np
@@ -71,7 +71,8 @@ def Analysis(analysis_paths):
         #analysis_path=/home/jiliqiang/Rpm_Deb/Deb/Deb_exact/activemq-master
         #分析整体的json
         command = f"{syft_path} scan  {analysis_path} -o json"
-        output = subprocess.check_output(command, shell=True)
+        p = Popen(command, shell=True, stdout=PIPE, stderr=PIPE)
+        output, stderr = p.communicate()
         print("整体")
         print(output.decode())
         overView_json = json.loads(output.decode())
@@ -101,7 +102,8 @@ def Analysis(analysis_paths):
                     analysis = result
                     # 执行处理压缩包的命令
                     command = f"{syft_path} scan  {analysis} -o json"
-                    output = subprocess.check_output(command, shell=True)
+                    p = Popen(command, shell=True, stdout=PIPE, stderr=PIPE)
+                    output, stderr = p.communicate()
                     print("局部压缩包")
                     print(output.decode())
                     #合并json文件
@@ -203,7 +205,8 @@ def Scan(scan_path,output_file,ExterDependencies,sbomType):
     matrix=np.zeros((1024,1024))
     #生成syft普通json
     command_syft = f"{syft_path11} scan  {scan_path} -o json"
-    syft_output = subprocess.check_output(command_syft,shell=True)
+    p = Popen(command_syft, shell=True, stdout=PIPE, stderr=PIPE)
+    syft_output, stderr = p.communicate()
     syft_json = json.loads(syft_output.decode())
     # tempath = scan_path+'-syft.json'
     # with open(tempath,"w") as f:
@@ -277,7 +280,8 @@ def Scan(scan_path,output_file,ExterDependencies,sbomType):
                 if artifact['name'] == "":
                     artifact['purl'] = f'pkg:maven/unkonwn/unkonwn@unkonwn'
         except KeyError:
-            print("键不存在")
+            #print("键不存在")
+            pass
     #syft_json['artifacts'] = artifact
     tempath = scan_path + '-syft.json'
     with open(tempath, "w") as f:

@@ -91,7 +91,7 @@ def setInstalledPackagesStatus(sourcesListManager:SourcesListManager.SourcesList
 		if package is not None:
 			package.status="installed"
 		else:
-			res.append(getSpecificInstalledPackage(packageName))
+			res.extend(getSpecificInstalledPackage(packageName))
 	return res
 def unzip(zipfile,toPath):
 	with tarfile.open(zipfile) as f:
@@ -113,6 +113,9 @@ def extractSrc(srcFile,srcFile2,distPath):
 		unzip(srcFile2,projectPath)
 	return projectPath
 def scansrc(srcs,options):
+	sourcesListManager=SourcesListManager.SourcesListManager()
+	entryMap=SpecificPackage.EntryMap()
+	repoPackages=sourcesListManager.getAllPackages()
 	mode="merge"
 	genSpdx=False
 	spdxPath='.'
@@ -185,7 +188,7 @@ def scansrc(srcs,options):
 		if genCyclonedx is True:
 			srcmain(normalize.normalReplace(name),srcPath,dependsList,'cyclonedx',cyclonedxPath)
 
-		print("generate SPOM for "+name)
+		print("generate SPOM for: "+name)
 	else:
 		for package in packages:
 			depset=set()
@@ -194,6 +197,9 @@ def scansrc(srcs,options):
 			for p in depset:
 				depends[p.packageInfo.name+'@'+p.packageInfo.version]=p.packageInfo.dumpAsDict()
 			dependsList=list(depends.values())
-			srcmain(normalize.normalReplace(package.fullName),srcPath,dependsList,'spdx',".")
-			print("generate SPOM for "+package.fullName)
+			if genSpdx is True:
+				srcmain(normalize.normalReplace(package.fullName),srcPath,dependsList,'spdx',spdxPath)
+			if genCyclonedx is True:
+				srcmain(normalize.normalReplace(package.fullName),srcPath,dependsList,'cyclonedx',cyclonedxPath)
+			print("generate SPOM for: "+package.fullName)
 	return 0

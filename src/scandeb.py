@@ -9,8 +9,10 @@ import requests
 import loadConfig
 
 def downloadPackage(selectedPackage):
-	return nwkTools.downloadFile(selectedPackage.repoURL+'/'+selectedPackage.fileName,'/tmp/aptC/packages',normalize.normalReplace(selectedPackage.fileName.rsplit('/',1)[1]))
-
+	packagePath=nwkTools.downloadFile(selectedPackage.repoURL+'/'+selectedPackage.fileName,'/tmp/aptC/packages',normalize.normalReplace(selectedPackage.fileName.rsplit('/',1)[1]))
+	if packagePath is None:
+		print("failed to download package from:"+selectedPackage.repoURL+'/'+selectedPackage.fileName)
+	return packagePath
 def queryCVE(spdxObj,aptConfigure:loadConfig.aptcConfigure):
 	url=aptConfigure.querycveURL
 	try:
@@ -65,6 +67,8 @@ def scandeb(command,options,packages,genSpdx=True,saveSpdxPath=None,genCyclonedx
 			project_packages[p.packageInfo.name].append(p.fullName)
 		dependsList=list(depends.values())
 		packageFilePath=downloadPackage(selectedPackage)
+		if packageFilePath is None:
+			return 1
 		if dumpFileOnly is True:
 			if genSpdx is True:
 				spdxPath=spdxmain(selectedPackageName,packageFilePath,dependsList,'spdx',saveSpdxPath)

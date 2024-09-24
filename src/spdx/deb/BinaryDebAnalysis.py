@@ -18,7 +18,7 @@ syft_path11 = '/usr/share/aptC/spdx/syft11/syft'
 #针对Deb包进行解压缩
 def extract_deb(deb_path):
     dir_Path = re.sub(r'\.deb$', '', deb_path)
-    print(dir_Path)
+    #print(dir_Path)
     # mkdir_command = f'mkdir {dir_Path}'
     #使用命令解压
     command_extract = f"dpkg -x {deb_path} {dir_Path}"
@@ -31,7 +31,7 @@ def getExternalDependenies(scan_path):
     dpkg_output = subprocess.check_output(dpkg_command,shell=True)
     # print(dpkg_output)
     dpkg_output_json = json.loads(dpkg_output.decode())
-    print(dpkg_output_json)
+    #print(dpkg_output_json)
 #针对二进制的deb包做分析
 def binaryDebScan(inputPath,output_file,ExterDependencies,sbomType):
     #获取外部依赖
@@ -41,7 +41,8 @@ def binaryDebScan(inputPath,output_file,ExterDependencies,sbomType):
     project_name = scan_path
     # 生成syft普通json
     command_syft = f"{syft_path11} scan  {scan_path} -o json"
-    syft_output = subprocess.check_output(command_syft, shell=True)
+    p = subprocess.Popen(command_syft, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    syft_output, stderr = p.communicate()
     syft_json = json.loads(syft_output.decode())
     tempath = scan_path + '-syft.json'
     with open(tempath, "w") as f:
