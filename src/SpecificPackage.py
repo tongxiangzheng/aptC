@@ -144,6 +144,10 @@ def getDependes(package,dependesSet:set):
 	if package in dependesSet:
 		return
 	dependesSet.add(package)
+	print(package.fullName,package.packageInfo.version,package.packageInfo.release)
+	for p in package.requirePointers:
+		print(" "+p.fullName,end="")
+	print("")
 	for p in package.requirePointers:
 		getDependes(p,dependesSet)	
 
@@ -172,6 +176,7 @@ class SpecificPackage:
 		self.getGitLinked=False
 		self.source=source
 		self.registerProvided=False
+		self.haveFoundRequires=False
 	def addProvidesPointer(self,package):
 		#无需手动调用，addRequirePointer自动处理
 		self.providesPointers.append(package)
@@ -185,6 +190,9 @@ class SpecificPackage:
 		for provide in self.providesInfo:
 			entryMap.registerEntry(provide,self)
 	def findRequires(self,entryMap:EntryMap)->None:
+		if self.haveFoundRequires is True:
+			return
+		self.haveFoundRequires=True
 		requirePackageSet=set()
 		requires=dict()
 		for require in self.requiresInfo:
@@ -193,9 +201,13 @@ class SpecificPackage:
 			requires[require.name].append(require)
 		for requireName,requireList in requires.items():
 			res=entryMap.queryRequires(requireName,requireList)
-			if res is not None and res not in requirePackageSet:
+			if res is not None and res.fullName not in requirePackageSet:
+				if self.fullName=='libc6':
+					print(requirePackageSet)
+					print(res.fullName)
 				self.addRequirePointer(res)
-				requirePackageSet.add(res)
+				requirePackageSet.add(res.fullName)
+				
 	def getSelfEntry(self):
 		return self.providesInfo[-1]
 	def setGitLink(self):

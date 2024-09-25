@@ -188,7 +188,7 @@ def scansrc(srcs,options):
 		if genCyclonedx is True:
 			srcmain(normalize.normalReplace(name),srcPath,dependsList,'cyclonedx',cyclonedxPath)
 
-		print("generate SPOM for: "+name)
+		print("generate SBOM for: "+name)
 	else:
 		for package in packages:
 			depset=set()
@@ -201,5 +201,5 @@ def scansrc(srcs,options):
 				srcmain(normalize.normalReplace(package.fullName),srcPath,dependsList,'spdx',spdxPath)
 			if genCyclonedx is True:
 				srcmain(normalize.normalReplace(package.fullName),srcPath,dependsList,'cyclonedx',cyclonedxPath)
-			print("generate SPOM for: "+package.fullName)
+			print("generate SBOM for: "+package.fullName)
 	return 0
