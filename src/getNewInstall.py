@@ -64,8 +64,6 @@ def getInstalledPackagesInfo(sourcesListManager):
 			res.append(package)
 		else:
 			res.append(getSpecificInstalledPackage(packageName))
-		if package is not None:
-			res.append(package)
 	return res
 	
 
