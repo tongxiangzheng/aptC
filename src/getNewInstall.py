@@ -52,6 +52,7 @@ def getInstalledPackagesInfo(sourcesListManager):
 				dist=d
 				break
 		if dist is None:
+			print("!error: unkonwn dists")
 			continue
 		version_release=info.split(' ')[1].rsplit('-',1)
 		version=version_release[0].split(':')[-1]

@@ -5,8 +5,8 @@ sys.path.insert(0,os.path.join(DIR,'..','src'))
 import normalize
 import aptC
 def autotest_binary(name,version,release):
-	#if os.path.isfile("./binary/"+normalize.normalReplace(f"{name}.spdx.json")):
-	#	return 0
+	if os.path.isfile("./binary/"+normalize.normalReplace(f"{name}.spdx.json")):
+		return 0
 	print(name,version,release)
 	return aptC.user_main("apt",["genspdx",f"{name}={version}-{release}","binary"], exit_code=False)
 

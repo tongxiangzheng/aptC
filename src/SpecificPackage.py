@@ -144,10 +144,10 @@ def getDependes(package,dependesSet:set):
 	if package in dependesSet:
 		return
 	dependesSet.add(package)
-	print(package.fullName,package.packageInfo.version,package.packageInfo.release)
-	for p in package.requirePointers:
-		print(" "+p.fullName,end="")
-	print("")
+	#print(package.fullName,package.packageInfo.version,package.packageInfo.release)
+	#for p in package.requirePointers:
+	#	print(" "+p.fullName,end="")
+	#print("")
 	for p in package.requirePointers:
 		getDependes(p,dependesSet)	
 
@@ -202,9 +202,8 @@ class SpecificPackage:
 		for requireName,requireList in requires.items():
 			res=entryMap.queryRequires(requireName,requireList)
 			if res is not None and res.fullName not in requirePackageSet:
-				if self.fullName=='libc6':
-					print(requirePackageSet)
-					print(res.fullName)
+				if self.status=='installed' and res.status!='installed':
+					continue
 				self.addRequirePointer(res)
 				requirePackageSet.add(res.fullName)
 				

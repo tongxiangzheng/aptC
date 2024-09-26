@@ -2,6 +2,7 @@ import nwkTools
 from loguru import logger as log
 import os
 def getDscFile(repoURL,dscFileName):
+	#return None
 	baseURL=repoURL
 	try:
 		dscFilePath=nwkTools.downloadFile(baseURL+dscFileName,os.path.join("/tmp","aptC","repoMetadata","dscFiles",dscFileName.rsplit('/',1)[0]),dscFileName.rsplit('/',1)[1])

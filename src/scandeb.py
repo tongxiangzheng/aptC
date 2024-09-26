@@ -12,6 +12,8 @@ def downloadPackage(selectedPackage):
 	packagePath=nwkTools.downloadFile(selectedPackage.repoURL+'/'+selectedPackage.fileName,'/tmp/aptC/packages',normalize.normalReplace(selectedPackage.fileName.rsplit('/',1)[1]))
 	if packagePath is None:
 		print("failed to download package from:"+selectedPackage.repoURL+'/'+selectedPackage.fileName)
+	#packagePath="/home/txz/code/aptC/test/acct-underline-6.6.4-4build2-underline-amd64.deb"
+	#for test
 	return packagePath
 def queryCVE(spdxObj,aptConfigure:loadConfig.aptcConfigure):
 	url=aptConfigure.querycveURL
