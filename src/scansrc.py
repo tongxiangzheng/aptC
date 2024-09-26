@@ -64,7 +64,9 @@ def getSpecificInstalledPackage(packageName):
 	p = Popen(f"apt-cache show {packageName}", shell=True, stdout=PIPE, stderr=PIPE)
 	stdout, stderr = p.communicate()
 	data=stdout.decode().split('\n')
-	return RepoFileManager.parseDEBPackages(data,osInfo.OSName,osInfo.OSDist,None)
+	package=RepoFileManager.parseDEBPackages(data,osInfo.OSName,osInfo.OSDist,None)[0]
+	package.status="installed"
+	return package
 def setInstalledPackagesStatus(sourcesListManager:SourcesListManager.SourcesListManager):
 	p = Popen("/usr/bin/apt list --installed", shell=True, stdout=PIPE, stderr=PIPE)
 	stdout, stderr = p.communicate()
@@ -91,7 +93,7 @@ def setInstalledPackagesStatus(sourcesListManager:SourcesListManager.SourcesList
 		if package is not None:
 			package.status="installed"
 		else:
-			res.extend(getSpecificInstalledPackage(packageName))
+			res.append(getSpecificInstalledPackage(packageName))
 	return res
 def unzip(zipfile,toPath):
 	with tarfile.open(zipfile) as f:
@@ -162,15 +164,13 @@ def scansrc(srcs,options):
 	repoPackages.extend(setInstalledPackagesStatus(sourcesListManager))
 	
 	for package in packages:
-		package.status="installed"
+		package.status="willInstalled"
 		package.registerProvides(entryMap)
 	for package in repoPackages:
 		package.registerProvides(entryMap)
-	
-	for package in repoPackages:
-		package.findRequires(entryMap)
-	for package in packages:
-		package.findRequires(entryMap)
+	# for package in packages:
+	# 	package.findRequires(entryMap)
+	# return 0
 	srcPath=extractSrc(srcFile,srcFile2,"/tmp/aptC/extract/")
 	if srcPath is None:
 		return 1
@@ -192,9 +192,10 @@ def scansrc(srcs,options):
 	else:
 		for package in packages:
 			depset=set()
-			SpecificPackage.getDependes(package,depset)
+			SpecificPackage.getDependes(package,depset,entryMap)
 			depends=dict()
 			for p in depset:
+				p.setGitLink()
 				depends[p.packageInfo.name+'@'+p.packageInfo.version]=p.packageInfo.dumpAsDict()
 			dependsList=list(depends.values())
 			if genSpdx is True:

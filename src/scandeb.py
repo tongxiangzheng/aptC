@@ -63,6 +63,7 @@ def scandeb(command,options,packages,genSpdx=True,saveSpdxPath=None,genCyclonedx
 		depends=dict()
 		project_packages=dict()
 		for p in willInstallPackages:
+			p.setGitLink()
 			depends[p.packageInfo.name+'@'+p.packageInfo.version]=p.packageInfo.dumpAsDict()
 			if p.packageInfo.name not in project_packages:
 				project_packages[p.packageInfo.name]=[]

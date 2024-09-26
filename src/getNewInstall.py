@@ -29,13 +29,12 @@ def parseInstallInfo(info:str,sourcesListManager:SourcesListManager.SourcesListM
 	#packageInfo=PackageInfo.PackageInfo('Ubuntu',dist,name,version,release,arch)
 	#print(name,dist,version,release)
 	specificPackage=sourcesListManager.getSpecificPackage(name,dist,version,release)
-	specificPackage.setGitLink()
 	return specificPackage
 def getSpecificInstalledPackage(packageName):
 	p = Popen(f"apt-cache show {packageName}", shell=True, stdout=PIPE, stderr=PIPE)
 	stdout, stderr = p.communicate()
 	data=stdout.decode().split('\n')
-	return RepoFileManager.parseDEBPackages(data,osInfo.OSName,osInfo.OSDist,None)
+	return RepoFileManager.parseDEBPackages(data,osInfo.OSName,osInfo.OSDist,None)[0]
 def getInstalledPackagesInfo(sourcesListManager):
 	res=[]
 	p = Popen("/usr/bin/apt list --installed", shell=True, stdout=PIPE, stderr=PIPE)
@@ -52,7 +51,7 @@ def getInstalledPackagesInfo(sourcesListManager):
 				dist=d
 				break
 		if dist is None:
-			print("!error: unkonwn dists")
+			res.append(getSpecificInstalledPackage(packageName))
 			continue
 		version_release=info.split(' ')[1].rsplit('-',1)
 		version=version_release[0].split(':')[-1]
@@ -95,7 +94,7 @@ def getNewInstall(packageName:str,options,sourcesListManager:SourcesListManager.
 			res.append(parseInstallInfo(info,sourcesListManager))
 	if len(res)==0:
 		print("warning: no package will install")
-		return None,[]
+		includeInstalled=True
 	selectedPackage=None
 	packageName=packageName.split('=',1)[0]
 	for p in res:
@@ -106,29 +105,28 @@ def getNewInstall(packageName:str,options,sourcesListManager:SourcesListManager.
 			for provide in p.providesInfo:
 				if provide.name==packageName:
 					selectedPackage=p
-	if selectedPackage is None:
-		log.warning("unknown error")
+					break
 	if includeInstalled is True:
 		installedPackages=getInstalledPackagesInfo(sourcesListManager)
+		if selectedPackage is None:
+			for p in installedPackages:
+				for provide in p.providesInfo:
+					if provide.name==packageName:
+						selectedPackage=p
+						break
+		if selectedPackage is None:
+			return None,[]
 		entryMap=SpecificPackage.EntryMap()
 		for package in installedPackages:
 			package.registerProvides(entryMap)
-		for package in res:
-			#print("")
-			#print(package.fullName)
-			#for provide in package.providesInfo:
-			#	print(' '+provide.dump())
-			#print("-----")
-			#for provide in package.requiresInfo:
-			#	print(' '+provide.dump())
-			package.registerProvides(entryMap)
+		for p in res:
+			p.registerProvides(entryMap)
+		
+		#selectedPackage.findRequires(entryMap)
+		#return None,[]
 
-		for package in installedPackages:
-			package.findRequires(entryMap)
-		for package in res:
-			package.findRequires(entryMap)
 		depends=set()
-		SpecificPackage.getDependes(selectedPackage,depends)
+		SpecificPackage.getDependes(selectedPackage,depends,entryMap)
 		res=list(depends)
 
 	return selectedPackage,res

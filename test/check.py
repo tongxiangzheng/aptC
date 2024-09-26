@@ -3,8 +3,8 @@ import json
 import spdxReader
 for file in os.listdir("./src"):
 	if not os.path.isfile("./binary/"+file):
-		print("")
-		print(file+" not in binary")
+		#print("")
+		#print(file+" not in binary")
 		continue
 	srcres=dict()
 	binres=dict()
@@ -18,13 +18,11 @@ for file in os.listdir("./src"):
 		res=spdxReader.parseSpdxObj(spdxObj)
 		for s in res:
 			binres[s.name]=s
-
 	needOutput=False
 	for s in srcres.values():
 		if s.name not in binres:
 			needOutput=True
 			break
-	print("--")
 	for s in binres.values():
 		if s.name not in srcres:
 			needOutput=True
@@ -37,6 +35,7 @@ for file in os.listdir("./src"):
 	for s in srcres.values():
 		if s.name not in binres:
 			print(s.name,s.version,s.release)
+	print("--")
 	print("binary:")
 	for s in binres.values():
 		if s.name not in srcres:

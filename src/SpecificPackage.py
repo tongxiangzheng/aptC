@@ -24,6 +24,18 @@ def firstNumber(rawstr)->str:
 	if res.endswith('.'):
 		res=res[:-1]
 	return res
+class PackageEntrys:
+	def __init__(self):
+		self.entrys=[]
+		self.qualified=False
+		#表示或逻辑，entrys匹配任意一个即可
+	def addEntry(self,entry):
+		self.entrys.append(entry)
+		entry.fatherNode=self
+	def setQualified(self):
+		self.qualified=True
+	def queryIsQualified(self):
+		return self.qualified
 class PackageEntry:
 	def __init__(self,name:str,flags:str,version:str,release:str):
 		self.name=name
@@ -34,6 +46,7 @@ class PackageEntry:
 		if release is not None:
 			release=firstNumber(release)
 		self.release=release
+		self.fatherNode=None
 	def checkMatch(self,dist):
 		if self.flags is None or dist.flags is None:
 			return True
@@ -75,6 +88,10 @@ class PackageEntry:
 				return True
 			else:
 				return False
+	def setQualified(self):
+		self.fatherNode.setQualified()
+	def queryIsQualified(self):
+		return self.fatherNode.queryIsQualified()
 	def dump(self):
 		res=self.name
 		if self.flags=='EQ':
@@ -101,16 +118,26 @@ class EntryMap:
 		self.provideEntryPackages=defaultdict(defaultNoneList)
 	def registerEntry(self,entry:PackageEntry,package):
 		self.provideEntryPackages[entry.name].append((package,entry))
-	def queryRequires(self,requireName:str,entrys:list):
+	def queryRequires(self,requireName:str,entrys:list,mustInstalled:bool):
 		# requireName==entrys[i].name
 		infoList=self.provideEntryPackages[requireName]
 		res=[]
 		for info in infoList:
 			package=info[0]
+			if mustInstalled is True:
+				if package.status=='uninstalled':
+					continue
 			provideEntry=info[1]
+			isMatch=True
 			for entry in entrys:
+				if entry.queryIsQualified() is True:
+					continue
 				if entry.checkMatch(provideEntry):
-					res.append(package)
+					continue
+				else:
+					isMatch=False
+			if isMatch is True:
+				res.append(package)
 		#print(" "+entry.name)
 		#for r in res:
 			#print("  "+r[0].fullName)
@@ -121,7 +148,7 @@ class EntryMap:
 			else:
 				res2=[]
 				for r in res:
-					if r.status=='installed':
+					if r.status=='installed' or r.status=='willInstalled':
 						res2.append(r)
 				if len(res2)==1:
 					return res2[0]
@@ -140,16 +167,17 @@ class EntryMap:
 				return res2
 		#TODO:check res[0][1] is match
 		return res[0]
-def getDependes(package,dependesSet:set):
+def getDependes(package,dependesSet:set,entryMap):
 	if package in dependesSet:
 		return
 	dependesSet.add(package)
-	#print(package.fullName,package.packageInfo.version,package.packageInfo.release)
-	#for p in package.requirePointers:
-	#	print(" "+p.fullName,end="")
-	#print("")
+	package.findRequires(entryMap)
+	# print(package.fullName,package.packageInfo.version,package.packageInfo.release)
+	# for p in package.requirePointers:
+	# 	print(" "+p.fullName,end="")
+	# print("")
 	for p in package.requirePointers:
-		getDependes(p,dependesSet)	
+		getDependes(p,dependesSet,entryMap)	
 
 
 def defaultCVEList():
@@ -195,18 +223,67 @@ class SpecificPackage:
 		self.haveFoundRequires=True
 		requirePackageSet=set()
 		requires=dict()
-		for require in self.requiresInfo:
-			if require.name not in requires:
-				requires[require.name]=[]
-			requires[require.name].append(require)
-		for requireName,requireList in requires.items():
-			res=entryMap.queryRequires(requireName,requireList)
-			if res is not None and res.fullName not in requirePackageSet:
-				if self.status=='installed' and res.status!='installed':
+		for requireEntrys in self.requiresInfo:
+			for require in requireEntrys.entrys:
+				if require.name not in requires:
+					requires[require.name]=[]
+				requires[require.name].append(require)
+		checkedRequireItems=set()
+		for requireEntrys in self.requiresInfo:
+			for require in requireEntrys.entrys:
+				requireName=require.name
+				if requireName in checkedRequireItems:
 					continue
-				self.addRequirePointer(res)
-				requirePackageSet.add(res.fullName)
-				
+				#print('-----')
+				#print(requireName)
+				checkedRequireItems.add(requireName)
+				requireList=requires[requireName]
+				needSolve=False
+				for require in requireList:
+					if require.queryIsQualified() is False:
+						needSolve=True
+						break
+				#print(needSolve)
+				if needSolve is False:
+					continue
+				res=entryMap.queryRequires(requireName,requireList,True)
+				if res is not None and res not in requirePackageSet:
+					#print(res.fullName)
+					for require in requireList:
+						require.setQualified()
+					self.addRequirePointer(res)
+					requirePackageSet.add(res)
+		if self.status=="installed":
+			return
+		checkedRequireItems=set()
+		for requireEntrys in self.requiresInfo:
+			for require in requireEntrys.entrys:
+				requireName=require.name
+				if requireName in checkedRequireItems:
+					continue
+				#print('-----')
+				#print(requireName)
+				checkedRequireItems.add(requireName)
+				requireList=requires[requireName]
+				needSolve=False
+				for require in requireList:
+					if require.queryIsQualified() is False:
+						needSolve=True
+						break
+				#print(needSolve)
+				if needSolve is False:
+					continue
+				res=entryMap.queryRequires(requireName,requireList,False)
+				if res is not None and res not in requirePackageSet:
+					#print(" "+res.fullName)
+					for require in requireList:
+						require.setQualified()
+					self.addRequirePointer(res)
+					requirePackageSet.add(res)
+		# print(self.fullName,self.packageInfo.version,self.packageInfo.release)
+		# for p in self.requirePointers:
+		# 	print(" "+p.fullName,end="")
+		# print("")
 	def getSelfEntry(self):
 		return self.providesInfo[-1]
 	def setGitLink(self):

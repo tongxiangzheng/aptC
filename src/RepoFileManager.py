@@ -115,8 +115,10 @@ def parseDEBPackages(repoInfos,osType,dist,repoURL)->list:
 		if info.startswith("Depends:") or info.startswith("Pre-Depends:") or info.startswith("Recommends:"):
 			depInfos=info.split(' ',1)[1].split(",")
 			for depInfo in depInfos:
+				dep=SpecificPackage.PackageEntrys()
 				for dInfo in depInfo.split('|'):
-					requires.append(parseDEBItemInfo(dInfo))
+					dep.addEntry(parseDEBItemInfo(dInfo))
+				requires.append(dep)
 		if info.startswith("Provides:"):
 			proInfos=info.split(' ',1)[1].split(",")
 			for proInfo in proInfos:

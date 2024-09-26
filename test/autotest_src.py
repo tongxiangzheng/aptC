@@ -6,11 +6,12 @@ sys.path.insert(0,os.path.join(DIR,'..','src'))
 import aptC
 import normalize
 from subprocess import PIPE, Popen
-def autotest_src(name,fullname,version,release):
-	version=version.split(':')[-1]
-	#if os.path.isfile("./src/"+normalize.normalReplace(f"{fullname}.spdx.json")):
-	#	return 0
+def autotest_src(name,fullname,version,release,checkExist=True):
+	if checkExist:
+		if os.path.isfile("./src/"+normalize.normalReplace(f"{fullname}.spdx.json")):
+			return 0
 	print(name,version,release)
+	version=version.split(':')[-1]
 	dscLink=f"http://archive.ubuntu.com/ubuntu/pool/main/{name[0]}/{name}/{name}_{version}-{release}.dsc"
 	
 	p = Popen("dget "+dscLink, shell=True, stdout=PIPE, stderr=PIPE,cwd="./source")
