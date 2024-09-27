@@ -118,7 +118,7 @@ class EntryMap:
 		self.provideEntryPackages=defaultdict(defaultNoneList)
 	def registerEntry(self,entry:PackageEntry,package):
 		self.provideEntryPackages[entry.name].append((package,entry))
-	def queryRequires(self,requireName:str,entrys:list,mustInstalled:bool):
+	def queryRequires(self,packageName,requireName:str,entrys:list,mustInstalled:bool):
 		# requireName==entrys[i].name
 		infoList=self.provideEntryPackages[requireName]
 		res=[]
@@ -148,10 +148,10 @@ class EntryMap:
 		res2=res[0]
 		for r in res[1:]:
 			if(name!=r.packageInfo.name):
-				log.warning("failed to decide require package for: "+entry.name)
+				log.warning("failed to decide require package for: "+entry.name+" in pacakge: "+packageName)
 				for r1 in res:
 					log.info(" one of provider is: "+r1.fullName)
-				return []
+				return [res[0]]
 			if compareVersion(versionEntry.version,r.getSelfEntry().version)==-1:
 				versionEntry=r.getSelfEntry()
 				res2=r
@@ -161,10 +161,10 @@ def getDependes(package,dependesSet:set,entryMap):
 		return
 	dependesSet.add(package)
 	package.findRequires(entryMap)
-	# print(package.fullName,package.packageInfo.version,package.packageInfo.release)
-	# for p in package.requirePointers:
-	# 	print(" "+p.fullName,end="")
-	# print("")
+	#print(package.fullName,package.packageInfo.version,package.packageInfo.release,package.status)
+	#for p in package.requirePointers:
+	#	print(" "+p.fullName,end="")
+	#print("")
 	for p in package.requirePointers:
 		getDependes(p,dependesSet,entryMap)	
 
@@ -229,7 +229,7 @@ class SpecificPackage:
 				#print(needSolve)
 				if needSolve is False:
 					continue
-				res=entryMap.queryRequires(requireName,requireList,True)
+				res=entryMap.queryRequires(self.fullName,requireName,requireList,True)
 				for r in res:
 					if r not in requirePackageSet:
 						#print(res.fullName)
@@ -257,7 +257,7 @@ class SpecificPackage:
 				#print(needSolve)
 				if needSolve is False:
 					continue
-				res=entryMap.queryRequires(requireName,requireList,False)
+				res=entryMap.queryRequires(self.fullName,requireName,requireList,False)
 				for r in res:
 					if r not in requirePackageSet:
 						#print(res.fullName)

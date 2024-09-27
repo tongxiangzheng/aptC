@@ -1,3 +1,3 @@
 import autotest_src
 
-autotest_src.autotest_src("adcli","adcli","0.9.1","1ubuntu2",checkExist=False)
+autotest_src.autotest_src("aisleriot","aisleriot","1:3.22.22","1",checkExist=False)

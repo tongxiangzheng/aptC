@@ -1,3 +1,3 @@
 import autotest_binary
 
-autotest_binary.autotest_binary([("adcli","0.9.1","1ubuntu2")],checkExist=False)
+autotest_binary.autotest_binary([("aisleriot","1:3.22.22","1")],checkExist=False)
