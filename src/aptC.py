@@ -59,16 +59,16 @@ def user_main(exec,args, exit_code=False):
 			else:
 				errcode=0
 		elif command=='genspdx':
-			if len(packages)!=2:
+			if len(packages)<2:
 				print("unknown usage for apt genspdx")
 				return 1
-			scandeb.scandeb(command,options,[packages[0]],genSpdx=True,saveSpdxPath=packages[1],genCyclonedx=False,saveCyclonedxPath=None,dumpFileOnly=True)
+			scandeb.scandeb(command,options,packages[:-1],genSpdx=True,saveSpdxPath=packages[-1],genCyclonedx=False,saveCyclonedxPath=None,dumpFileOnly=True)
 			return 0
 		elif command=='gencyclonedx':
-			if len(packages)!=2:
+			if len(packages)<2:
 				print("unknown usage for apt gencyclonedx")
 				return 1
-			scandeb.scandeb(command,options,[packages[0]],genSpdx=False,saveSpdxPath=None,genCyclonedx=True,saveCyclonedxPath=packages[1],dumpFileOnly=True)
+			scandeb.scandeb(command,options,packages[:-1],genSpdx=False,saveSpdxPath=None,genCyclonedx=True,saveCyclonedxPath=packages[1],dumpFileOnly=True)
 			return 0
 		elif command=='scansrc':
 			errcode=scansrc.scansrc(packages,options)

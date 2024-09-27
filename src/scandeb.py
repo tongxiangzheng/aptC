@@ -52,10 +52,8 @@ def scandeb(command,options,packages,genSpdx=True,saveSpdxPath=None,genCyclonedx
 	if aptConfigure is None:
 		print('ERROR: cannot load config file in /etc/aptC/config.json, please check config file ')
 		return False
-	for selectedPackageName in packages:
-		selectedPackage,willInstallPackages=getNewInstall.getNewInstall(selectedPackageName,options,sourcesListManager,dumpFileOnly)
-		if selectedPackage is None:
-			continue
+	getNewInstallRes=getNewInstall.getNewInstall(packages,options,sourcesListManager,dumpFileOnly)
+	for selectedPackage,willInstallPackages in getNewInstallRes.items():
 		if len(willInstallPackages)>0:
 			noPackagesWillInstalled=False
 		selectedPackageName=selectedPackage.fullName
@@ -71,7 +69,7 @@ def scandeb(command,options,packages,genSpdx=True,saveSpdxPath=None,genCyclonedx
 		dependsList=list(depends.values())
 		packageFilePath=downloadPackage(selectedPackage)
 		if packageFilePath is None:
-			return 1
+			return False
 		if dumpFileOnly is True:
 			if genSpdx is True:
 				spdxPath=spdxmain(selectedPackageName,packageFilePath,dependsList,'spdx',saveSpdxPath)

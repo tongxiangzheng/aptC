@@ -1,3 +1,3 @@
 import autotest_binary
 
-autotest_binary.autotest_binary("aisleriot","1:3.22.22","1",checkExist=False)
+autotest_binary.autotest_binary("adwaita-icon-theme","41.0","1ubuntu1",checkExist=False)

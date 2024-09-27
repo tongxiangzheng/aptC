@@ -130,43 +130,32 @@ class EntryMap:
 			provideEntry=info[1]
 			isMatch=True
 			for entry in entrys:
-				if entry.queryIsQualified() is True:
-					continue
 				if entry.checkMatch(provideEntry):
 					continue
 				else:
 					isMatch=False
+				
 			if isMatch is True:
 				res.append(package)
 		#print(" "+entry.name)
 		#for r in res:
 			#print("  "+r[0].fullName)
-		if len(res)!=1:
-			if len(res)==0:
-				#log.warning("no package provide the require file: "+entry.name)
-				return None
-			else:
-				res2=[]
-				for r in res:
-					if r.status=='installed' or r.status=='willInstalled':
-						res2.append(r)
-				if len(res2)==1:
-					return res2[0]
-				name=res[0].packageInfo.name
-				versionEntry=res[0].getSelfEntry()
-				res2=res[0]
-				for r in res[1:]:
-					if(name!=r.packageInfo.name):
-						#log.warning("failed to decide require package for: "+entry.name)
-						#for r1 in res:
-						#	log.info(" one of provider is: "+r1.fullName)
-						return res2
-					if compareVersion(versionEntry.version,r.getSelfEntry().version)==-1:
-						versionEntry=r.getSelfEntry()
-						res2=r
-				return res2
-		#TODO:check res[0][1] is match
-		return res[0]
+		if len(res)<=1 or mustInstalled is True:
+			return res
+		
+		name=res[0].packageInfo.name
+		versionEntry=res[0].getSelfEntry()
+		res2=res[0]
+		for r in res[1:]:
+			if(name!=r.packageInfo.name):
+				log.warning("failed to decide require package for: "+entry.name)
+				for r1 in res:
+					log.info(" one of provider is: "+r1.fullName)
+				return []
+			if compareVersion(versionEntry.version,r.getSelfEntry().version)==-1:
+				versionEntry=r.getSelfEntry()
+				res2=r
+		return [res2]
 def getDependes(package,dependesSet:set,entryMap):
 	if package in dependesSet:
 		return
@@ -182,12 +171,6 @@ def getDependes(package,dependesSet:set,entryMap):
 
 def defaultCVEList():
 	return 0
-class Counter:
-	def __init__(self):
-		self.cnt=0
-	def getId(self)->int:
-		self.cnt+=1
-		return self.cnt
 class SpecificPackage:
 	def __init__(self,packageInfo:PackageInfo,fullName:str,provides:list,requires:list,arch:str,source,status="uninstalled",repoURL=None,fileName=""):
 		provides.append(PackageEntry(fullName,"EQ",packageInfo.version,packageInfo.release))
@@ -247,12 +230,13 @@ class SpecificPackage:
 				if needSolve is False:
 					continue
 				res=entryMap.queryRequires(requireName,requireList,True)
-				if res is not None and res not in requirePackageSet:
-					#print(res.fullName)
-					for require in requireList:
-						require.setQualified()
-					self.addRequirePointer(res)
-					requirePackageSet.add(res)
+				for r in res:
+					if r not in requirePackageSet:
+						#print(res.fullName)
+						for require in requireList:
+							require.setQualified()
+						self.addRequirePointer(r)
+						requirePackageSet.add(r)
 		if self.status=="installed":
 			return
 		checkedRequireItems=set()
@@ -274,12 +258,13 @@ class SpecificPackage:
 				if needSolve is False:
 					continue
 				res=entryMap.queryRequires(requireName,requireList,False)
-				if res is not None and res not in requirePackageSet:
-					#print(" "+res.fullName)
-					for require in requireList:
-						require.setQualified()
-					self.addRequirePointer(res)
-					requirePackageSet.add(res)
+				for r in res:
+					if r not in requirePackageSet:
+						#print(res.fullName)
+						for require in requireList:
+							require.setQualified()
+						self.addRequirePointer(r)
+						requirePackageSet.add(r)
 		# print(self.fullName,self.packageInfo.version,self.packageInfo.release)
 		# for p in self.requirePointers:
 		# 	print(" "+p.fullName,end="")

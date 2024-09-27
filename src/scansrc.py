@@ -60,8 +60,8 @@ def queryBuildInfo(srcFile,srcFile2,osType,osDist,arch,aptConfigure:loadConfig.a
 	else:
 		print(f'failed to query buildInfo: Request failed with status code {response.status_code}')
 		return None
-def getSpecificInstalledPackage(packageName):
-	p = Popen(f"apt-cache show {packageName}", shell=True, stdout=PIPE, stderr=PIPE)
+def getSpecificInstalledPackage(packageName,version_release):
+	p = Popen(f"apt-cache show {packageName}={version_release}", shell=True, stdout=PIPE, stderr=PIPE)
 	stdout, stderr = p.communicate()
 	data=stdout.decode().split('\n')
 	package=RepoFileManager.parseDEBPackages(data,osInfo.OSName,osInfo.OSDist,None)[0]
@@ -83,8 +83,9 @@ def setInstalledPackagesStatus(sourcesListManager:SourcesListManager.SourcesList
 				dist=d
 				break
 		if dist is None:
+			res.append(getSpecificInstalledPackage(packageName,info.split(' ')[1]))
 			continue
-		version_release=info.split(' ')[1].split('-')
+		version_release=info.split(' ')[1].rsplit('-',1)
 		version=version_release[0].split(':')[-1]
 		release=None
 		if len(version_release)>1:
@@ -93,7 +94,7 @@ def setInstalledPackagesStatus(sourcesListManager:SourcesListManager.SourcesList
 		if package is not None:
 			package.status="installed"
 		else:
-			res.append(getSpecificInstalledPackage(packageName))
+			res.append(getSpecificInstalledPackage(packageName,info.split(' ')[1]))
 	return res
 def unzip(zipfile,toPath):
 	with tarfile.open(zipfile) as f:

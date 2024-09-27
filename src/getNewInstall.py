@@ -29,12 +29,15 @@ def parseInstallInfo(info:str,sourcesListManager:SourcesListManager.SourcesListM
 	#packageInfo=PackageInfo.PackageInfo('Ubuntu',dist,name,version,release,arch)
 	#print(name,dist,version,release)
 	specificPackage=sourcesListManager.getSpecificPackage(name,dist,version,release)
+	specificPackage.status="willInstalled"
 	return specificPackage
-def getSpecificInstalledPackage(packageName):
-	p = Popen(f"apt-cache show {packageName}", shell=True, stdout=PIPE, stderr=PIPE)
+def getSpecificInstalledPackage(packageName,version_release):
+	p = Popen(f"apt-cache show {packageName}={version_release}", shell=True, stdout=PIPE, stderr=PIPE)
 	stdout, stderr = p.communicate()
 	data=stdout.decode().split('\n')
-	return RepoFileManager.parseDEBPackages(data,osInfo.OSName,osInfo.OSDist,None)[0]
+	package=RepoFileManager.parseDEBPackages(data,osInfo.OSName,osInfo.OSDist,None)[0]
+	package.status="installed"
+	return package
 def getInstalledPackagesInfo(sourcesListManager):
 	res=[]
 	p = Popen("/usr/bin/apt list --installed", shell=True, stdout=PIPE, stderr=PIPE)
@@ -51,7 +54,7 @@ def getInstalledPackagesInfo(sourcesListManager):
 				dist=d
 				break
 		if dist is None:
-			res.append(getSpecificInstalledPackage(packageName))
+			res.append(getSpecificInstalledPackage(packageName,info.split(' ')[1]))
 			continue
 		version_release=info.split(' ')[1].rsplit('-',1)
 		version=version_release[0].split(':')[-1]
@@ -63,11 +66,11 @@ def getInstalledPackagesInfo(sourcesListManager):
 			package.status="installed"
 			res.append(package)
 		else:
-			res.append(getSpecificInstalledPackage(packageName))
+			res.append(getSpecificInstalledPackage(packageName,info.split(' ')[1]))
 	return res
 	
 
-def getNewInstall(packageName:str,options,sourcesListManager:SourcesListManager.SourcesListManager,includeInstalled=False):
+def getNewInstall(packages:list,options,sourcesListManager:SourcesListManager.SourcesListManager,includeInstalled=False):
 	cmd="/usr/bin/apt-get reinstall -s "
 	for option in options:
 		if option.startswith('--genspdx'):
@@ -77,8 +80,9 @@ def getNewInstall(packageName:str,options,sourcesListManager:SourcesListManager.
 		if option.startswith('-n'):
 			continue
 		cmd+=option+' '
-	cmd+=packageName
-	res=[]
+	for packageName in packages:
+		cmd+=packageName
+	willInstallPackages=[]
 	#log.info('cmd is '+cmd)
 	#actualPackageName=packageName
 	p = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
@@ -91,42 +95,44 @@ def getNewInstall(packageName:str,options,sourcesListManager:SourcesListManager.
 		# 	log.info("Note, selecting \'"+actualPackageName+"\' instead of \'"+packageName+"\'")
 		# it not work because in non-terminal, the info will show
 		if info.startswith('Inst '):
-			res.append(parseInstallInfo(info,sourcesListManager))
-	if len(res)==0:
+			willInstallPackages.append(parseInstallInfo(info,sourcesListManager))
+	if len(willInstallPackages)==0:
 		print("warning: no package will install")
 		includeInstalled=True
-	selectedPackage=None
-	packageName=packageName.split('=',1)[0]
-	for p in res:
-		if p.fullName==packageName:
-			selectedPackage=p
-	if selectedPackage is None:
-		for p in res:
-			for provide in p.providesInfo:
-				if provide.name==packageName:
-					selectedPackage=p
-					break
-	if includeInstalled is True:
-		installedPackages=getInstalledPackagesInfo(sourcesListManager)
+	resmap=dict()
+	for packageName in packages:
+		selectedPackage=None
+		packageName=packageName.split('=',1)[0]
+		for p in willInstallPackages:
+			if p.fullName==packageName:
+				selectedPackage=p
 		if selectedPackage is None:
-			for p in installedPackages:
+			for p in willInstallPackages:
 				for provide in p.providesInfo:
 					if provide.name==packageName:
 						selectedPackage=p
 						break
-		if selectedPackage is None:
-			return None,[]
-		entryMap=SpecificPackage.EntryMap()
-		for package in installedPackages:
-			package.registerProvides(entryMap)
-		for p in res:
-			p.registerProvides(entryMap)
-		
-		#selectedPackage.findRequires(entryMap)
-		#return None,[]
+		if includeInstalled is True:
+			installedPackages=getInstalledPackagesInfo(sourcesListManager)
+			if selectedPackage is None:
+				for p in installedPackages:
+					for provide in p.providesInfo:
+						if provide.name==packageName:
+							selectedPackage=p
+							break
+			if selectedPackage is None:
+				continue
+			entryMap=SpecificPackage.EntryMap()
+			for package in installedPackages:
+				package.registerProvides(entryMap)
+			for p in willInstallPackages:
+				p.registerProvides(entryMap)
+			
+			#selectedPackage.findRequires(entryMap)
+			#return None,[]
 
-		depends=set()
-		SpecificPackage.getDependes(selectedPackage,depends,entryMap)
-		res=list(depends)
-
-	return selectedPackage,res
+			depends=set()
+			SpecificPackage.getDependes(selectedPackage,depends,entryMap)
+			res=list(depends)
+		resmap[selectedPackage]=res
+	return resmap
