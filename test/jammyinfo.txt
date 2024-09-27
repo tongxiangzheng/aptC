@@ -5,6 +5,7 @@ acpid acpid 1:2.0.33 1ubuntu1
 adcli adcli 0.9.1 1ubuntu2
 advancecomp advancecomp 2.1 2.1ubuntu2
 adwaita-icon-theme adwaita-icon-theme 41.0 1ubuntu1
+adwaita-icon-theme adwaita-icon-theme-full 41.0 1ubuntu1
 aide aide 0.17.4 1
 aide aide-common 0.17.4 1
 aisleriot aisleriot 1:3.22.22 1

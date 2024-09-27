@@ -1,3 +1,3 @@
 import autotest_binary
 
-autotest_binary.autotest_binary("adwaita-icon-theme","41.0","1ubuntu1",checkExist=False)
+autotest_binary.autotest_binary([("adcli","0.9.1","1ubuntu2")],checkExist=False)

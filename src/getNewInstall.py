@@ -81,7 +81,7 @@ def getNewInstall(packages:list,options,sourcesListManager:SourcesListManager.So
 			continue
 		cmd+=option+' '
 	for packageName in packages:
-		cmd+=packageName
+		cmd+=packageName+' '
 	willInstallPackages=[]
 	#log.info('cmd is '+cmd)
 	#actualPackageName=packageName
@@ -100,6 +100,13 @@ def getNewInstall(packages:list,options,sourcesListManager:SourcesListManager.So
 		print("warning: no package will install")
 		includeInstalled=True
 	resmap=dict()
+	entryMap=SpecificPackage.EntryMap()
+	if includeInstalled is True:
+		installedPackages=getInstalledPackagesInfo(sourcesListManager)
+		for package in installedPackages:
+			package.registerProvides(entryMap)
+	for p in willInstallPackages:
+		p.registerProvides(entryMap)
 	for packageName in packages:
 		selectedPackage=None
 		packageName=packageName.split('=',1)[0]
@@ -112,27 +119,25 @@ def getNewInstall(packages:list,options,sourcesListManager:SourcesListManager.So
 					if provide.name==packageName:
 						selectedPackage=p
 						break
-		if includeInstalled is True:
-			installedPackages=getInstalledPackagesInfo(sourcesListManager)
-			if selectedPackage is None:
+				if selectedPackage is not None:
+					break
+			if includeInstalled is True:
 				for p in installedPackages:
 					for provide in p.providesInfo:
 						if provide.name==packageName:
 							selectedPackage=p
 							break
-			if selectedPackage is None:
-				continue
-			entryMap=SpecificPackage.EntryMap()
-			for package in installedPackages:
-				package.registerProvides(entryMap)
-			for p in willInstallPackages:
-				p.registerProvides(entryMap)
-			
-			#selectedPackage.findRequires(entryMap)
-			#return None,[]
+					if selectedPackage is not None:
+						break
 
-			depends=set()
-			SpecificPackage.getDependes(selectedPackage,depends,entryMap)
-			res=list(depends)
+		if selectedPackage is None:
+			continue
+			
+		#selectedPackage.findRequires(entryMap)
+		#return None,[]
+
+		depends=set()
+		SpecificPackage.getDependes(selectedPackage,depends,entryMap)
+		res=list(depends)
 		resmap[selectedPackage]=res
 	return resmap

@@ -5,10 +5,11 @@ sys.path.insert(0,os.path.join(DIR,'..','src'))
 import normalize
 import aptC
 def autotest_binary(infos,checkExist=True):
-
 	if checkExist:
-		if os.path.isfile("./binary/"+normalize.normalReplace(f"{infos[0][0]}.spdx.json")):
-			return 0
+		for info in infos:
+			if os.path.isfile("./binary/"+normalize.normalReplace(f"{info[0]}.spdx.json")):
+				return 0
+	print("-------")
 	packages=["genspdx"]
 	for name,version,release in infos:
 		print(name,version,release)

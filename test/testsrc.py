@@ -1,3 +1,3 @@
 import autotest_src
 
-autotest_src.autotest_src("adwaita-icon-theme","adwaita-icon-theme","41.0","1ubuntu1",checkExist=False)
+autotest_src.autotest_src("adcli","adcli","0.9.1","1ubuntu2",checkExist=False)
