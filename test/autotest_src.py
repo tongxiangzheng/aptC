@@ -12,7 +12,10 @@ def autotest_src(name,fullname,version,release,checkExist=True):
 			return 0
 	print(name,version,release)
 	version=version.split(':')[-1]
-	dscLink=f"http://archive.ubuntu.com/ubuntu/pool/main/{name[0]}/{name}/{name}_{version}-{release}.dsc"
+	if release is None:
+		dscLink=f"http://archive.ubuntu.com/ubuntu/pool/main/{name[0]}/{name}/{name}_{version}.dsc"
+	else:
+		dscLink=f"http://archive.ubuntu.com/ubuntu/pool/main/{name[0]}/{name}/{name}_{version}-{release}.dsc"
 	
 	p = Popen("dget "+dscLink, shell=True, stdout=PIPE, stderr=PIPE,cwd="./source")
 	stdout, stderr = p.communicate()
@@ -27,7 +30,10 @@ def autotest_src(name,fullname,version,release,checkExist=True):
 	
 	srcFile2=None
 	for t in zipType:
-		fileName=f"./source/{name}_{version}-{release}.debian.tar.{t}"
+		if release is None:
+			fileName=f"./source/{name}_{version}.debian.tar.{t}"
+		else:
+			fileName=f"./source/{name}_{version}-{release}.debian.tar.{t}"
 		if os.path.isfile(fileName):
 			srcFile2=fileName
 			break
@@ -37,7 +43,10 @@ def autotest_src(name,fullname,version,release,checkExist=True):
 		return aptC.user_main("apt",["scansrc",srcFile,srcFile2,"--genspdx=./src","-mode=split"], exit_code=False)
 	else:
 		for t in zipType:
-			fileName=f"./source/{name}_{version}.tar.{t}"
+			if release is None:
+				fileName=f"./source/{name}_{version}.tar.{t}"
+			else:
+				fileName=f"./source/{name}_{version}-{release}.tar.{t}"
 			if os.path.isfile(fileName):
 				srcFile=fileName
 				break
@@ -57,6 +66,8 @@ if __name__ == "__main__":
 		data=f.readlines()
 	checked=set()
 	for info in data:
+		if info.startswith("#"):
+			continue
 		info=info.split(' ')
 		name=info[0].strip()
 		fullname=info[1].strip()
@@ -64,7 +75,10 @@ if __name__ == "__main__":
 			continue
 		checked.add(name)
 		version=info[2].strip()
-		release=info[3].strip()
+		if len(info)>3:
+			release=info[3].strip()
+		else:
+			release=None
 		#autotest_deb(name,version,release)
 		if autotest_src(name,fullname,version,release) != 0:
 			print(name,version,release)

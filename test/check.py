@@ -1,11 +1,13 @@
 import os
 import json
 import spdxReader
+cnt=0
 for file in os.listdir("./src"):
 	if not os.path.isfile("./binary/"+file):
 		#print("")
 		#print(file+" not in binary")
 		continue
+	cnt+=1
 	srcres=dict()
 	binres=dict()
 	with open("./src/"+file) as f:
@@ -40,4 +42,5 @@ for file in os.listdir("./src"):
 	for s in binres.values():
 		if s.name not in srcres:
 			print(s.name,s.version,s.release)
-	
+
+print(f"check {cnt} pairs")

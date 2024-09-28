@@ -14,9 +14,10 @@ def getSelfDist():
 	return ""
 selfDist=getSelfDist()
 def parseInstallInfo(info:str,sourcesListManager:SourcesListManager.SourcesListManager)->SpecificPackage.SpecificPackage:
-	if info.endswith('[]'):
-		info=info.rsplit(' ',1)[0]
-	info=info.strip().split(' ',2)
+	info=info.strip()
+	while info.endswith(']'):
+		info=info.rsplit('[',1)[0].strip()
+	info=info.split(' ',2)
 	name=info[1]
 	additionalInfo=info[2].split(']')[-2].strip()[1:].split(' ')
 	version_release=additionalInfo[0].rsplit('-',1)

@@ -108,6 +108,10 @@ def extractSrc(srcFile,srcFile2,distPath):
 	projectPath=None
 	for item in os.listdir(distPath):
 		if os.path.isdir(os.path.join(distPath,item)):
+			nitem=normalize.normalReplace(item)
+			if nitem!=item:
+				shutil.move(os.path.join(distPath,item), os.path.join(distPath,nitem))
+				item=nitem
 			projectPath=os.path.join(distPath,item)
 	if projectPath is None:
 		print("error:unzip unknown error")
@@ -178,7 +182,7 @@ def scansrc(srcs,options):
 	if mode=="merge":
 		depset=set()
 		for package in packages:
-			SpecificPackage.getDependes(package,depset)
+			SpecificPackage.getDependes(package,depset,entryMap)
 		depends=dict()
 		for p in depset:
 			depends[p.packageInfo.name+'@'+p.packageInfo.version]=p.packageInfo.dumpAsDict()

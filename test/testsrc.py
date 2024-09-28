@@ -1,3 +1,3 @@
 import autotest_src
 
-autotest_src.autotest_src("aisleriot","aisleriot","1:3.22.22","1",checkExist=False)
+autotest_src.autotest_src("busybox","busybox-initramfs","1:1.30.1","7ubuntu3",checkExist=False)

@@ -18,6 +18,9 @@ def autotest_binary(infos,checkExist=True):
 		else:
 			packages.append(f"{name}={version}")
 	packages.append("binary")
+	#for info in packages:
+	#	print(info,end=' ')
+	#print("")
 	return aptC.user_main("apt",packages, exit_code=False)
 
 if __name__ == "__main__":
@@ -25,11 +28,16 @@ if __name__ == "__main__":
 		data=f.readlines()
 	nameMap=dict()
 	for info in data:
+		if info.startswith("#"):
+			continue
 		info=info.split(' ')
 		name=info[0].strip()
 		fullName=info[1].strip()
 		version=info[2].strip()
-		release=info[3].strip()
+		if len(info)>3:
+			release=info[3].strip()
+		else:
+			release=None
 		if name not in nameMap:
 			nameMap[name]=[]
 		nameMap[name].append((fullName,version,release))
