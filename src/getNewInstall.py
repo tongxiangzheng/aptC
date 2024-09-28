@@ -31,6 +31,7 @@ def parseInstallInfo(info:str,sourcesListManager:SourcesListManager.SourcesListM
 	#print(name,dist,version,release)
 	specificPackage=sourcesListManager.getSpecificPackage(name,dist,version,release)
 	specificPackage.status="willInstalled"
+
 	return specificPackage
 def getSpecificInstalledPackage(packageName,version_release):
 	p = Popen(f"apt-cache show {packageName}={version_release}", shell=True, stdout=PIPE, stderr=PIPE)
@@ -63,6 +64,7 @@ def getInstalledPackagesInfo(sourcesListManager):
 		if len(version_release)>1:
 			release=version_release[1]
 		package=sourcesListManager.getSpecificPackage(packageName,dist,version,release)
+		
 		if package is not None:
 			package.status="installed"
 			res.append(package)
@@ -108,6 +110,7 @@ def getNewInstall(packages:list,options,sourcesListManager:SourcesListManager.So
 			package.registerProvides(entryMap)
 	for p in willInstallPackages:
 		p.registerProvides(entryMap)
+	package_select=set()
 	for packageName in packages:
 		selectedPackage=None
 		packageName=packageName.split('=',1)[0]
@@ -136,9 +139,10 @@ def getNewInstall(packages:list,options,sourcesListManager:SourcesListManager.So
 			
 		#selectedPackage.findRequires(entryMap)
 		#return None,[]
-
-		depends=set()
-		SpecificPackage.getDependes(selectedPackage,depends,entryMap)
+		SpecificPackage.getDependsPrepare(entryMap,selectedPackage)
+		package_select.add(selectedPackage)
+	for selectedPackage in package_select:
+		depends=SpecificPackage.getDepends(entryMap,selectedPackage)
 		res=list(depends)
 		resmap[selectedPackage]=res
 	return resmap

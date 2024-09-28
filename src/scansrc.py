@@ -120,9 +120,6 @@ def extractSrc(srcFile,srcFile2,distPath):
 		unzip(srcFile2,projectPath)
 	return projectPath
 def scansrc(srcs,options):
-	sourcesListManager=SourcesListManager.SourcesListManager()
-	entryMap=SpecificPackage.EntryMap()
-	repoPackages=sourcesListManager.getAllPackages()
 	mode="merge"
 	genSpdx=False
 	spdxPath='.'
@@ -180,9 +177,11 @@ def scansrc(srcs,options):
 	if srcPath is None:
 		return 1
 	if mode=="merge":
+		for package in packages:
+			SpecificPackage.getDependsPrepare(entryMap,package,depset)
 		depset=set()
 		for package in packages:
-			SpecificPackage.getDependes(package,depset,entryMap)
+			SpecificPackage.getDepends(entryMap,package,depset)
 		depends=dict()
 		for p in depset:
 			depends[p.packageInfo.name+'@'+p.packageInfo.version]=p.packageInfo.dumpAsDict()
@@ -196,8 +195,9 @@ def scansrc(srcs,options):
 		print("generate SBOM for: "+name)
 	else:
 		for package in packages:
-			depset=set()
-			SpecificPackage.getDependes(package,depset,entryMap)
+			depset=SpecificPackage.getDependsPrepare(entryMap,package)
+		for package in packages:
+			depset=SpecificPackage.getDepends(entryMap,package)
 			depends=dict()
 			for p in depset:
 				p.setGitLink()

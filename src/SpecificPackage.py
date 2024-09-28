@@ -2,18 +2,7 @@ from collections import defaultdict
 from loguru import logger as log
 from PackageInfo import PackageInfo
 import DscParser
-def compareVersion(version1,version2):
-	# -1: version1<version2 0:version1==version2 1:version1>version2
-	v1=version1.split('.')
-	v2=version2.split('.')
-	for i in range(min(len(v1),len(v2))):
-		if int(v1[i])<int(v2[i]):
-			return -1
-		if int(v1[i])>int(v2[i]):
-			return 1
-	#if len(v1)!=len(v2):
-	#	log.warning("version cannot compare, v1: "+version1+" v2: "+version2)
-	return 0
+
 def firstNumber(rawstr)->str:
 	res=""
 	for c in rawstr:
@@ -24,6 +13,38 @@ def firstNumber(rawstr)->str:
 	if res.endswith('.'):
 		res=res[:-1]
 	return res
+def compareVersion(version1,version2):
+	# -1: version1<version2 0:version1==version2 1:version1>version2
+	v1=version1.split('.')
+	v2=version2.split('.')
+	for i in range(min(len(v1),len(v2))):
+		if v1[i].isdigit():
+			v1i=int(v1[i])
+		else:
+			v1i=v1[i]
+		if v2[i].isdigit():
+			v2i=int(v2[i])
+		else:
+			v2i=v2[i]
+		if type(v1i)!=type(v2i):
+			v1i=int(firstNumber(v1[i]))
+			v2i=int(firstNumber(v2[i]))
+		if v1i<v2i:
+			return -1
+		if v1i>v2i:
+			return 1
+	if len(v1)<len(v2):
+		return -1
+	if len(v1)>len(v2):
+		return 1
+	return 0
+def compareEntry(a,b):
+	v1=compareVersion(a.version,b.version)
+	if v1!=0:
+		return v1
+	if a.release is None or b.release is None:
+		return 0
+	return compareVersion(a.release,b.release)
 class PackageEntrys:
 	def __init__(self):
 		self.entrys=[]
@@ -41,10 +62,8 @@ class PackageEntry:
 		self.name=name
 		self.flags=flags
 		if version is not None:
-			version=firstNumber(version.split(':')[-1])
+			version=version.split(':')[-1]
 		self.version=version
-		if release is not None:
-			release=firstNumber(release)
 		self.release=release
 		self.fatherNode=None
 	def checkMatch(self,dist):
@@ -64,27 +83,27 @@ class PackageEntry:
 			elif dist.flags=='GT':
 				flags='LT'
 		if flags=='EQ':
-			if compareVersion(dist.version,self.version)==0 and (self.release is None or dist.release is None or dist.release==self.release):
+			if compareEntry(dist,self)==0:
 				return True
 			else:
 				return False
 		elif flags=='LE':
-			if compareVersion(dist.version,self.version)==-1 or (compareVersion(dist.version,self.version)==0 and (self.release is None or dist.release is None or dist.release<self.release)):
+			if compareEntry(dist,self)==-1:
 				return True
 			else:
 				return False
 		elif flags=='LT':
-			if compareVersion(dist.version,self.version)==-1 or (compareVersion(dist.version,self.version)==0 and (self.release is None or dist.release is None or dist.release<=self.release)):
+			if compareEntry(dist,self)<=0:
 				return True
 			else:
 				return False
 		elif flags=='GE':
-			if compareVersion(dist.version,self.version)==1 or (compareVersion(dist.version,self.version)==0 and (self.release is None or dist.release is None or dist.release>self.release)):
+			if compareEntry(dist,self)==1:
 				return True
 			else:
 				return False
 		elif flags=='GT':
-			if compareVersion(dist.version,self.version)==1 or (compareVersion(dist.version,self.version)==0 and (self.release is None or dist.release is None or dist.release>=self.release)):
+			if compareEntry(dist,self)>=0:
 				return True
 			else:
 				return False
@@ -148,27 +167,38 @@ class EntryMap:
 		res2=res[0]
 		for r in res[1:]:
 			if(name!=r.packageInfo.name):
-				log.warning("failed to decide require package for: "+entry.name+" in pacakge: "+packageName)
-				for r1 in res:
-					log.info(" one of provider is: "+r1.fullName)
+				#log.warning("failed to decide require package for: "+entry.name+" in pacakge: "+packageName)
+				#for r1 in res:
+				#	log.info(" one of provider is: "+r1.fullName)
 				return [res[0]]
-			if compareVersion(versionEntry.version,r.getSelfEntry().version)==-1:
+			if compareEntry(versionEntry,r.getSelfEntry())==-1:
 				versionEntry=r.getSelfEntry()
 				res2=r
 		return [res2]
-def getDependes(package,dependesSet:set,entryMap):
+def getDependes_dfs(package,dependesSet:set,entryMap,includeInstalled):
 	if package in dependesSet:
 		return
+	if includeInstalled is False and package.status=='installed':
+		return
+	if package.status=='uninstalled':
+		package.status='willInstalled'
 	dependesSet.add(package)
 	package.findRequires(entryMap)
-	#print(package.fullName,package.packageInfo.version,package.packageInfo.release,package.status)
-	#for p in package.requirePointers:
-	#	print(" "+p.fullName,end="")
-	#print("")
+	if includeInstalled is True:
+		print("%"+package.fullName,package.packageInfo.version,package.packageInfo.release,package.status)
+		print("%",end="")
+		for p in package.requirePointers:
+			print(" "+p.fullName,end="")
+		print("")
 	for p in package.requirePointers:
-		getDependes(p,dependesSet,entryMap)	
-
-
+		getDependes_dfs(p,dependesSet,entryMap,includeInstalled)	
+def getDependsPrepare(entryMap,package):
+	depset=set()
+	getDependes_dfs(package,depset,entryMap,False)
+	return depset
+def getDepends(entryMap,package,depset=set()):
+	getDependes_dfs(package,depset,entryMap,True)
+	return depset
 def defaultCVEList():
 	return 0
 class SpecificPackage:
@@ -221,14 +251,6 @@ class SpecificPackage:
 				#print(requireName)
 				checkedRequireItems.add(requireName)
 				requireList=requires[requireName]
-				needSolve=False
-				for require in requireList:
-					if require.queryIsQualified() is False:
-						needSolve=True
-						break
-				#print(needSolve)
-				if needSolve is False:
-					continue
 				res=entryMap.queryRequires(self.fullName,requireName,requireList,True)
 				for r in res:
 					if r not in requirePackageSet:
@@ -265,10 +287,11 @@ class SpecificPackage:
 							require.setQualified()
 						self.addRequirePointer(r)
 						requirePackageSet.add(r)
-		# print(self.fullName,self.packageInfo.version,self.packageInfo.release)
-		# for p in self.requirePointers:
-		# 	print(" "+p.fullName,end="")
-		# print("")
+	def dump(self):
+		print(self.fullName,self.packageInfo.version,self.packageInfo.release,self.status)
+		for p in self.requirePointers:
+			print(" "+p.fullName,end="")
+		print("")
 	def getSelfEntry(self):
 		return self.providesInfo[-1]
 	def setGitLink(self):

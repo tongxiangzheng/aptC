@@ -137,14 +137,6 @@ def parseDEBPackages(repoInfos,osType,dist,repoURL)->list:
 	# 	print(r.packageInfo.name,r.fullName,r.packageInfo.version,r.packageInfo.release)
 	return res
 
-def firstNumber(rawstr)->str:
-	res=""
-	for c in rawstr:
-		if c.isdigit() is True or c == '.':
-			res+=c
-		else:
-			break
-	return res
 
 class RepoFileManager:
 	def __init__(self,url,repoPath,osType,dist):
@@ -168,13 +160,13 @@ class RepoFileManager:
 	def queryPackage(self,name,version,release):
 		if self.enable is False:
 			return None
-		version=firstNumber(version)
-		if release is not None:
-			release=firstNumber(release)
+		#version=firstNumber(version)
+		#if release is not None:
+		#	release=firstNumber(release)
 		if name in self.packageMap:
 			for specificPackage in self.packageMap[name]:
-				if firstNumber(specificPackage.packageInfo.version)==version:
-					if specificPackage.packageInfo.release is None or firstNumber(specificPackage.packageInfo.release)==release:
+				if SpecificPackage.compareVersion(specificPackage.packageInfo.version,version)==0:
+					if specificPackage.packageInfo.release is None or SpecificPackage.compareVersion(specificPackage.packageInfo.release,release)==0:
 						return specificPackage
 		return None
 	def getAllPackages(self):
