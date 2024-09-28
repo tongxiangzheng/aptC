@@ -198,7 +198,6 @@ def scansrc(srcs,options):
 			SpecificPackage.getDependsPrepare(entryMap,package)
 		for package in packages:
 			depset=SpecificPackage.getDepends(entryMap,package,set())
-			print(len(depset))
 			depends=dict()
 			for p in depset:
 				p.setGitLink()
