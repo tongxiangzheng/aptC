@@ -132,7 +132,7 @@ def scansrc(srcs,options):
 			genSpdx=True
 			spdxPath=option.split('=',1)[1]
 		if option.startswith('--gencyclonedx='):
-			genCyclone=True
+			genCyclonedx=True
 			cyclonePath=option.split('=',1)[1]
 	if spdxPath is False and cyclonePath is False:
 		spdxPath=True
@@ -178,7 +178,7 @@ def scansrc(srcs,options):
 		return 1
 	if mode=="merge":
 		for package in packages:
-			SpecificPackage.getDependsPrepare(entryMap,package,depset)
+			SpecificPackage.getDependsPrepare(entryMap,package)
 		depset=set()
 		for package in packages:
 			SpecificPackage.getDepends(entryMap,package,depset)
@@ -195,9 +195,10 @@ def scansrc(srcs,options):
 		print("generate SBOM for: "+name)
 	else:
 		for package in packages:
-			depset=SpecificPackage.getDependsPrepare(entryMap,package)
+			SpecificPackage.getDependsPrepare(entryMap,package)
 		for package in packages:
-			depset=SpecificPackage.getDepends(entryMap,package)
+			depset=SpecificPackage.getDepends(entryMap,package,set())
+			print(len(depset))
 			depends=dict()
 			for p in depset:
 				p.setGitLink()

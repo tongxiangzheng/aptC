@@ -42,5 +42,6 @@ for file in os.listdir("./src"):
 	for s in binres.values():
 		if s.name not in srcres:
 			print(s.name,s.version,s.release)
+	break
 
 print(f"check {cnt} pairs")

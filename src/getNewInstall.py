@@ -142,7 +142,7 @@ def getNewInstall(packages:list,options,sourcesListManager:SourcesListManager.So
 		SpecificPackage.getDependsPrepare(entryMap,selectedPackage)
 		package_select.add(selectedPackage)
 	for selectedPackage in package_select:
-		depends=SpecificPackage.getDepends(entryMap,selectedPackage)
+		depends=SpecificPackage.getDepends(entryMap,selectedPackage,set())
 		res=list(depends)
 		resmap[selectedPackage]=res
 	return resmap
