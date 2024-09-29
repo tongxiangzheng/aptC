@@ -1,6 +1,6 @@
 import autotest_binary
 
-testName="apparmor"
+testName="apport"
 with open("jammyinfo.txt") as f:
 	data=f.readlines()
 res=[]

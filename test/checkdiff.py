@@ -27,6 +27,9 @@ for item in srcdata:
 for packageName,bindep in binres.items():
 	if packageName not in srcres:
 		print("bin: "+packageName+" ")
+		for d in bindep:
+			print(" "+d,end="")
+		print("")
 		continue
 	srcdep=srcres[packageName]
 	for d in bindep:
@@ -38,4 +41,7 @@ for packageName,bindep in binres.items():
 for packageName,srcdep in srcres.items():
 	if packageName not in binres:
 		print("src: "+packageName+" ")
+		for d in srcdep:
+			print(" "+d,end="")
+		print("")
 		

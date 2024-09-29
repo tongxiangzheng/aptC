@@ -133,9 +133,9 @@ def scansrc(srcs,options):
 			spdxPath=option.split('=',1)[1]
 		if option.startswith('--gencyclonedx='):
 			genCyclonedx=True
-			cyclonePath=option.split('=',1)[1]
-	if spdxPath is False and cyclonePath is False:
-		spdxPath=True
+			cyclonedxPath=option.split('=',1)[1]
+	if genSpdx is False and genCyclonedx is False:
+		genSpdx=True
 	if len(srcs)==1:
 		srcFile=srcs[0]
 		srcFile2=None
