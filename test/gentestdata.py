@@ -6,8 +6,10 @@ import RepoFileManager
 repoFileManager=RepoFileManager.RepoFileManager("","./jammy-updates","ubuntu","jammy-updates")
 
 for package in repoFileManager.getAllPackages():
-	if package.packageInfo.name.startswith("linux") or package.packageInfo.name.startswith("gcc") or package.packageInfo.name.startswith("llvm") or package.packageInfo.name.startswith("texlive") or package.packageInfo.name.startswith("language"):
-		continue
+	skipPrefix=["linux","gcc","llvm","texlive","language","dotnet"]
+	for p in skipPrefix:
+		if package.packageInfo.name.startswith(p):
+			continue
 	if package.packageInfo.release is None:
 		print(package.packageInfo.name,package.fullName,package.packageInfo.version)
 	else:
