@@ -76,6 +76,8 @@ class PackageEntrys:
 		return self.qualified
 class PackageEntry:
 	def __init__(self,name:str,flags:str,version:str,release:str):
+		if name=="python3:any":
+			name="python3"
 		self.name=name
 		self.flags=flags
 		if version is not None:
@@ -179,19 +181,23 @@ class EntryMap:
 		if len(res)<=1 or mustInstalled is True:
 			return res
 		
-		name=res[0].packageInfo.name
-		versionEntry=res[0].getSelfEntry()
-		res2=res[0]
-		for r in res[1:]:
-			if(name!=r.packageInfo.name):
-				#log.warning("failed to decide require package for: "+entry.name+" in pacakge: "+packageName)
-				#for r1 in res:
-				#	log.info(" one of provider is: "+r1.fullName)
-				return [res[0]]
-			if compareEntry(versionEntry,r.getSelfEntry())==-1:
-				versionEntry=r.getSelfEntry()
-				res2=r
-		return [res2]
+		name_versionEntry=dict()
+		for r in res:
+			name=r.packageInfo.name
+			if name not in name_versionEntry:
+				name_versionEntry[name]=(r.getSelfEntry(),r)
+			else:
+				if compareEntry(name_versionEntry[name][0],r.getSelfEntry())==-1:
+					name_versionEntry[name]=(r.getSelfEntry(),r)
+		if len(name_versionEntry)==1:
+			return [name_versionEntry[res[0].packageInfo.name][1]]
+		if requireName in name_versionEntry:
+			return [name_versionEntry[requireName][1]]
+		log.warning("failed to decide require package for: "+entry.name+" in pacakge: "+packageName)
+		for r1 in res:
+			log.info(" one of provider is: "+r1.fullName)
+		return [name_versionEntry[res[0].packageInfo.name][1]]	
+		
 def getDependes_dfs(package,dependesSet:set,entryMap,includeInstalled):
 	if package in dependesSet:
 		return
@@ -201,12 +207,12 @@ def getDependes_dfs(package,dependesSet:set,entryMap,includeInstalled):
 		package.status='willInstalled'
 	dependesSet.add(package)
 	package.findRequires(entryMap)
-	if includeInstalled is True:
-		print("%"+package.fullName,package.packageInfo.version,package.packageInfo.release,package.status)
-		print("%",end="")
-		for p in package.requirePointers:
-			print(" "+p.fullName,end="")
-		print("")
+	# if includeInstalled is True:
+	# 	print("%"+package.fullName,package.packageInfo.version,package.packageInfo.release,package.status)
+	# 	print("%",end="")
+	# 	for p in package.requirePointers:
+	# 		print(" "+p.fullName,end="")
+	# 	print("")
 	for p in package.requirePointers:
 		getDependes_dfs(p,dependesSet,entryMap,includeInstalled)	
 def getDependsPrepare(entryMap,package):

@@ -55,7 +55,7 @@ def queryBuildInfo(srcFile,srcFile2,osType,osDist,arch,aptConfigure:loadConfig.a
 		if data['error']==0:
 			return data['buildinfo']
 		else:
-			print("failed to upload file: failinfo: "+data['errorMessage'])
+			print("failed to query package info: failinfo: "+data['errorMessage'])
 			return None
 	else:
 		print(f'failed to query buildInfo: Request failed with status code {response.status_code}')
