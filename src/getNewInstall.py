@@ -5,14 +5,7 @@ from subprocess import PIPE, Popen
 import osInfo
 import RepoFileManager
 from loguru import logger as log
-def getSelfDist():
-	with open("/etc/os-release") as f:
-		data=f.readlines()
-		for info in data:
-			if info.startswith('VERSION_CODENAME='):
-				return info.strip()[17:]	
-	return ""
-selfDist=getSelfDist()
+
 def parseInstallInfo(info:str,sourcesListManager:SourcesListManager.SourcesListManager)->SpecificPackage.SpecificPackage:
 	info=info.strip()
 	while info.endswith(']'):
@@ -101,7 +94,7 @@ def getNewInstall(packages:list,options,sourcesListManager:SourcesListManager.So
 			willInstallPackages.append(parseInstallInfo(info,sourcesListManager))
 	if len(willInstallPackages)==0:
 		print("warning: no package will install")
-		includeInstalled=True
+		return None
 	resmap=dict()
 	entryMap=SpecificPackage.EntryMap()
 	if includeInstalled is True:

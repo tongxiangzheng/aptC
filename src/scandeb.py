@@ -53,6 +53,8 @@ def scandeb(command,options,packages,genSpdx=True,saveSpdxPath=None,genCyclonedx
 		print('ERROR: cannot load config file in /etc/aptC/config.json, please check config file ')
 		return False
 	getNewInstallRes=getNewInstall.getNewInstall(packages,options,sourcesListManager,dumpFileOnly)
+	if getNewInstallRes is None:
+		return True
 	for selectedPackage,willInstallPackages in getNewInstallRes.items():
 		if len(willInstallPackages)>0:
 			noPackagesWillInstalled=False

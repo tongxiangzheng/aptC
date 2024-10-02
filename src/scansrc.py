@@ -164,11 +164,14 @@ def scansrc(srcs,options):
 	entryMap=SpecificPackage.EntryMap()
 	repoPackages=sourcesListManager.getAllPackages()
 	repoPackages.extend(setInstalledPackagesStatus(sourcesListManager))
-	
+	skipPackages=set()
 	for package in packages:
 		package.status="willInstalled"
 		package.registerProvides(entryMap)
+		skipPackages.add(package.fullName)
 	for package in repoPackages:
+		if package.fullName in skipPackages:
+			continue
 		package.registerProvides(entryMap)
 	# for package in packages:
 	# 	package.findRequires(entryMap)
