@@ -7,20 +7,11 @@ class PackageInfo:
 		self.name=name
 		self.gitLink=gitLink
 		self.arch=arch
-		id=version.find('p')
-		if id==-1:
-			self.update=None
-			self.version=version.split(':')[-1]
-		else:
-			self.update=version[id:]
-			self.version=version[0:id].split(':')[-1]
-			#print(version,self.version,self.update)
+		self.version=version.split(':')[-1]
 		self.release=release
 		self.version=version
 	def dump(self):
 		info={'osType':self.osType,'dist':self.dist,'name':self.name,'version':self.version,'release':self.release}
-		if self.update is not None:
-			info['update']=self.update
 		if self.gitLink is not None:
 			info['gitLink']=self.gitLink
 		return json.dumps(info)
@@ -28,8 +19,6 @@ class PackageInfo:
 		release=""
 		if self.release is not None:
 			release="-"+self.release
-			if self.update is not None:
-				release+='p'+self.update
 		version=self.version+release
 		info={'name':normalize.normalReplace(self.name),'version':normalize.normalReplace(version),'purl':self.dumpAsPurl()}
 		if self.gitLink is not None:
@@ -41,8 +30,6 @@ class PackageInfo:
 		release=""
 		if self.release is not None:
 			release="-"+self.release
-			if self.update is not None:
-				release+='p'+self.update
 		if self.gitLink is None:
 			return 'pkg:'+osKind+'/'+self.osType+'/'+normalize.normalReplace(self.name)+'@'+normalize.normalReplace(self.version+release)+'.'+normalize.normalReplace(self.dist)
 		else:
@@ -57,8 +44,6 @@ def loadPackageInfo(jsonInfo):
 	dist=jsonInfo['dist']
 	name=jsonInfo['name']
 	version=jsonInfo['version']
-	if 'update' in jsonInfo:
-		version=version+'p'+jsonInfo['update']
 	release=jsonInfo['release']
 	return PackageInfo(osType,dist,name,version,release,gitLink)
 

@@ -3,45 +3,62 @@ from loguru import logger as log
 from PackageInfo import PackageInfo
 import DscParser
 
-def firstNumber(rawstr)->str:
-	res=""
-	for c in rawstr:
-		if c.isdigit() is True or c == '.':
-			res+=c
+def splitDigitAndChar(rawstr)->list:
+	res=[]
+	if len(rawstr)==0:
+		return res
+	r=rawstr[0]
+	if r.isdigit() is True:
+		t="digit"
+	else:
+		t='char'
+	for i in range(1,len(rawstr)):
+		c=rawstr[i]
+		if c.isdigit() is True:
+			t2="digit"
 		else:
-			break
-	if res.endswith('.'):
-		res=res[:-1]
+			t2='char'
+		if t!=t2:
+			if t=='digit':
+				res.append(int(r))
+			else:
+				res.append(r)
+			r=""
+			t=t2
+		r+=c
+	if t=='digit':
+		res.append(int(r))
+	else:
+		res.append(r)
 	return res
 def compareVersion(version1,version2):
 	# -1: version1<version2 0:version1==version2 1:version1>version2
 	v1=version1.split('.')
 	v2=version2.split('.')
 	for i in range(min(len(v1),len(v2))):
-		if v1[i].isdigit():
-			v1i=int(v1[i])
-		else:
-			v1i=v1[i]
-		if v2[i].isdigit():
-			v2i=int(v2[i])
-		else:
-			v2i=v2[i]
-		if type(v1i)!=type(v2i):
-			v1i=int(firstNumber(v1[i]))
-			v2i=int(firstNumber(v2[i]))
-		if v1i<v2i:
-			return -1
-		if v1i>v2i:
-			return 1
+		v1l=splitDigitAndChar(v1[i])
+		v2l=splitDigitAndChar(v2[i])
+		for j in range(min(len(v1l),len(v2l))):
+			v1i=v1l[j]
+			v2i=v2l[j]
+			if type(v1i)!=type(v2i):
+				print("cannot compare")
+				print(v1)
+				print(v2)
+				return 0
+			if v1i<v2i:
+				return -1
+			if v1i>v2i:
+				return 1
 	if len(v1)<len(v2):
 		return -1
 	if len(v1)>len(v2):
 		return 1
 	return 0
 def compareEntry(a,b):
-	v1=compareVersion(a.version,b.version)
-	if v1!=0:
-		return v1
+	r=compareVersion(a.version,b.version)
+	if r!=0:
+		return r
 	if a.release is None or b.release is None:
 		return 0
 	return compareVersion(a.release,b.release)
@@ -88,22 +105,22 @@ class PackageEntry:
 			else:
 				return False
 		elif flags=='LE':
-			if compareEntry(dist,self)==-1:
-				return True
-			else:
-				return False
-		elif flags=='LT':
 			if compareEntry(dist,self)<=0:
 				return True
 			else:
 				return False
+		elif flags=='LT':
+			if compareEntry(dist,self)==-1:
+				return True
+			else:
+				return False
 		elif flags=='GE':
-			if compareEntry(dist,self)==1:
+			if compareEntry(dist,self)>=0:
 				return True
 			else:
 				return False
 		elif flags=='GT':
-			if compareEntry(dist,self)>=0:
+			if compareEntry(dist,self)==1:
 				return True
 			else:
 				return False

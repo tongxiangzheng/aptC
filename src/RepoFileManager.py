@@ -163,9 +163,10 @@ class RepoFileManager:
 		#version=firstNumber(version)
 		#if release is not None:
 		#	release=firstNumber(release)
+		e=SpecificPackage.PackageEntry(name,"EQ",version,release)
 		if name in self.packageMap:
 			for specificPackage in self.packageMap[name]:
-				if SpecificPackage.compareVersion(specificPackage.packageInfo.version,version)==0:
+				if SpecificPackage.compareEntry(specificPackage.getSelfEntry(),e)==0:
 					if specificPackage.packageInfo.release is None or SpecificPackage.compareVersion(specificPackage.packageInfo.release,release)==0:
 						return specificPackage
 		return None
