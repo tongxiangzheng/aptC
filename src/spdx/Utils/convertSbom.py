@@ -612,10 +612,13 @@ def convertSpdx_Deb_syft11(syft_json, project_name, output_file, ExterDependenci
     # 键是id,值是spdx_id
     id_spdxId = {}
     # 处理外部依赖
+    # print('进入SBOM生成阶段')
     spdx_id_externalDependencies = []
     for exterDependency in ExterDependencies:
         spdx_id_externalDependency = f"SPDXRef-Package-Deb---{exterDependency.name}--{uuid.uuid4()}"
         # 存储所有外部依赖的spdxid
+        
+        # print('purl:',exterDependency.purl)
         spdx_id_externalDependencies.append(spdx_id_externalDependency)
         package_exterDependency = Package(
             name=exterDependency.name,
@@ -740,11 +743,18 @@ def convertSpdx_Deb_syft11(syft_json, project_name, output_file, ExterDependenci
             )
             package.external_references.append(externPackageRef)
         purl = artifact['purl']
-        externPackageRef = ExternalPackageRef(
+        if purl == "":
+            externPackageRef = ExternalPackageRef(
+            category=ExternalPackageRefCategory.PACKAGE_MANAGER,
+            reference_type="purl",
+            locator=f'pkg:unkonwn/unkonwn/unkonwn@unkonwn'
+        )
+        else:
+            externPackageRef = ExternalPackageRef(
             category=ExternalPackageRefCategory.PACKAGE_MANAGER,
             reference_type="purl",
             locator=purl
-        )
+            )
         package.external_references.append(externPackageRef)
         # document.packages.append([package])
         document.packages.append(package)

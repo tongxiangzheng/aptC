@@ -37,7 +37,7 @@ def getExternalDependencies(dependsList):
 	ExternalDependencies = []
 	
 	#print("解析")
-	
+	# print('进入purl装载阶段')
 	for depends in dependsList:
 		
 		#获取dependency实例数组
@@ -59,6 +59,6 @@ def getExternalDependencies(dependsList):
 		#print("name:",name)
 		#print("version",version)
 		#print('gitLink',gitLink)
-		#print('purl',purl)
+		# print('purl',purl)
 
 	return ExternalDependencies
