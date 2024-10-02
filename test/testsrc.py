@@ -1,3 +1,3 @@
 import autotest_src
 
-autotest_src.autotest_src("apparmor","","3.0.4","2ubuntu2.4",checkExist=False)
+autotest_src.autotest_src("apport","","2.20.11","0ubuntu82.6",checkExist=False)
