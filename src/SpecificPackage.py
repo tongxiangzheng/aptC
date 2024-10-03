@@ -2,7 +2,7 @@ from collections import defaultdict
 from loguru import logger as log
 from PackageInfo import PackageInfo
 import DscParser
-import traceback
+
 def splitDigitAndChar(rawstr)->list:
 	res=[]
 	if len(rawstr)==0:
@@ -176,9 +176,6 @@ class EntryMap:
 				
 			if isMatch is True:
 				res.append(package)
-		#print(" "+entry.name)
-		#for r in res:
-			#print("  "+r[0].fullName)
 		if len(res)<=1 or mustInstalled is True:
 			return res
 		
@@ -198,7 +195,7 @@ class EntryMap:
 		for r1 in res:
 			log.info(" one of provider is: "+r1.fullName)
 		log.info(" select: "+name_versionEntry[res[0].fullName][1].fullName)
-		return [name_versionEntry[res[0].fullName][1]]	
+		return [name_versionEntry[res[0].fullName][1]]
 		
 def getDependes_dfs(package,dependesSet:set,entryMap,includeInstalled):
 	if package in dependesSet:
