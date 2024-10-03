@@ -1,6 +1,6 @@
 import autotest_binary
 
-testName="apparmor"
+testName="evolution-data-server"
 with open("jammyinfo.txt") as f:
 	data=f.readlines()
 res=[]

@@ -201,6 +201,7 @@ evolution-data-server evolution-data-server 3.44.4 0ubuntu1.1
 evolution-data-server evolution-data-server-common 3.44.4 0ubuntu1.1
 evolution-data-server evolution-data-server-dev 3.44.4 0ubuntu1.1
 evolution-data-server evolution-data-server-doc 3.44.4 0ubuntu1.1
+evolution-data-server evolution-data-server-tests 3.44.4 0ubuntu1.1
 exim4 exim4 4.95 4ubuntu2.6
 exim4 exim4-base 4.95 4ubuntu2.6
 exim4 exim4-config 4.95 4ubuntu2.6

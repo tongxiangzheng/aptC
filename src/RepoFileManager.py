@@ -5,70 +5,70 @@ import lz4.frame
 import SpecificPackage
 
 def parseDEBItemInfo(item):
-    item=item.strip()
-    name=None
-    flags=None
-    version=None
-    release=None
-    items_version=item.split('(')
-    if len(items_version)>1:
-        name=items_version[0].strip()
-        v=items_version[1].split(')')[0]
-        parse=v.split('=')
-        if len(parse)>1:
-            flags="EQ"
-            p2=parse[1].strip().split('-')
-            version=p2[0]
-            if len(p2)<1:
-                release=p2[1].split('.')[0]
-        parse=v.split('<')
-        if len(parse)>1:
-            flags="LE"
-            p2=parse[1].strip().split('-')
-            version=p2[0]
-            if len(p2)<1:
-                release=p2[1].split('.')[0]
-        parse=v.split('<=')
-        if len(parse)>1:
-            flags="LE"
-            p2=parse[1].strip().split('-')
-            version=p2[0]
-            if len(p2)<1:
-                release=p2[1].split('.')[0]
-        parse=v.split('<<')
-        if len(parse)>1:
-            flags="LT"
-            p2=parse[1].strip().split('-')
-            version=p2[0]
-            if len(p2)<1:
-                release=p2[1].split('.')[0]
-        parse=v.split('>')
-        if len(parse)>1:
-            flags="GE"
-            p2=parse[1].strip().split('-')
-            version=p2[0]
-            if len(p2)<1:
-                release=p2[1].split('.')[0]
-        parse=v.split('>=')
-        if len(parse)>1:
-            flags="GE"
-            p2=parse[1].strip().split('-')
-            version=p2[0]
-            if len(p2)<1:
-                release=p2[1].split('.')[0]
-        parse=v.split('>>')
-        if len(parse)>1:
-            flags="GT"
-            p2=parse[1].strip().split('-')
-            version=p2[0]
-            if len(p2)<1:
-                release=p2[1].split('.')[0]
-        # In dpkg document:
-        # The < and > operators are obsolete and should not be used, due to confusing semantics.
-        # To illustrate: 0.1 < 0.1 evaluates to true.
-    else:
-        name=item
-    return SpecificPackage.PackageEntry(name,flags,version,release)
+	item=item.strip()
+	name=None
+	flags=None
+	version=None
+	release=None
+	items_version=item.split('(')
+	if len(items_version)>1:
+		name=items_version[0].strip()
+		v=items_version[1].split(')')[0]
+		parse=v.split('=')
+		if len(parse)>1:
+			flags="EQ"
+			p2=parse[1].strip().split('-')
+			version=p2[0]
+			if len(p2)<1:
+				release=p2[1].split('.')[0]
+		parse=v.split('<')
+		if len(parse)>1:
+			flags="LE"
+			p2=parse[1].strip().split('-')
+			version=p2[0]
+			if len(p2)<1:
+				release=p2[1].split('.')[0]
+		parse=v.split('<=')
+		if len(parse)>1:
+			flags="LE"
+			p2=parse[1].strip().split('-')
+			version=p2[0]
+			if len(p2)<1:
+				release=p2[1].split('.')[0]
+		parse=v.split('<<')
+		if len(parse)>1:
+			flags="LT"
+			p2=parse[1].strip().split('-')
+			version=p2[0]
+			if len(p2)<1:
+				release=p2[1].split('.')[0]
+		parse=v.split('>')
+		if len(parse)>1:
+			flags="GE"
+			p2=parse[1].strip().split('-')
+			version=p2[0]
+			if len(p2)<1:
+				release=p2[1].split('.')[0]
+		parse=v.split('>=')
+		if len(parse)>1:
+			flags="GE"
+			p2=parse[1].strip().split('-')
+			version=p2[0]
+			if len(p2)<1:
+				release=p2[1].split('.')[0]
+		parse=v.split('>>')
+		if len(parse)>1:
+			flags="GT"
+			p2=parse[1].strip().split('-')
+			version=p2[0]
+			if len(p2)<1:
+				release=p2[1].split('.')[0]
+		# In dpkg document:
+		# The < and > operators are obsolete and should not be used, due to confusing semantics.
+		# To illustrate: 0.1 < 0.1 evaluates to true.
+	else:
+		name=item
+	return SpecificPackage.PackageEntry(name,flags,version,release)
 
 def parseDEBPackages(repoInfos,osType,dist,repoURL)->list:
 	fullName=""

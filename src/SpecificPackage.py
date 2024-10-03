@@ -2,7 +2,7 @@ from collections import defaultdict
 from loguru import logger as log
 from PackageInfo import PackageInfo
 import DscParser
-
+import traceback
 def splitDigitAndChar(rawstr)->list:
 	res=[]
 	if len(rawstr)==0:
@@ -42,14 +42,15 @@ def compareVersion(version1,version2):
 			v1i=v1l[j]
 			v2i=v2l[j]
 			if type(v1i)!=type(v2i):
-				print("cannot compare")
-				print(v1)
-				print(v2)
 				return 0
 			if v1i<v2i:
 				return -1
 			if v1i>v2i:
 				return 1
+		if len(v1l)<len(v2l):
+			return -1
+		if len(v1l)>len(v2l):
+			return 1
 	if len(v1)<len(v2):
 		return -1
 	if len(v1)>len(v2):
@@ -183,20 +184,21 @@ class EntryMap:
 		
 		name_versionEntry=dict()
 		for r in res:
-			name=r.packageInfo.name
+			name=r.fullName
 			if name not in name_versionEntry:
 				name_versionEntry[name]=(r.getSelfEntry(),r)
 			else:
 				if compareEntry(name_versionEntry[name][0],r.getSelfEntry())==-1:
 					name_versionEntry[name]=(r.getSelfEntry(),r)
 		if len(name_versionEntry)==1:
-			return [name_versionEntry[res[0].packageInfo.name][1]]
+			return [name_versionEntry[res[0].fullName][1]]
 		if requireName in name_versionEntry:
 			return [name_versionEntry[requireName][1]]
 		log.warning("failed to decide require package for: "+entry.name+" in pacakge: "+packageName)
 		for r1 in res:
 			log.info(" one of provider is: "+r1.fullName)
-		return [name_versionEntry[res[0].packageInfo.name][1]]	
+		log.info(" select: "+name_versionEntry[res[0].fullName][1].fullName)
+		return [name_versionEntry[res[0].fullName][1]]	
 		
 def getDependes_dfs(package,dependesSet:set,entryMap,includeInstalled):
 	if package in dependesSet:
