@@ -95,10 +95,11 @@ def scandeb(command,options,packages,genSpdx=True,saveSpdxPath=None,genCyclonedx
 			if projectName not in project_packages:
 				selectedPackage_cves.extend(c)
 		cves[selectedPackage.packageInfo.name]=selectedPackage_cves
-
+		haveOutput=False
 		for projectName,cves in cves.items():
 			if len(cves)==0:
 				continue
+			haveOutput=True
 			print("package: ",end='')
 			first=True
 			if projectName in project_packages:
@@ -116,7 +117,8 @@ def scandeb(command,options,packages,genSpdx=True,saveSpdxPath=None,genCyclonedx
 		return False
 	if noPackagesWillInstalled is True:
 		return True
-	
+	if haveOutput is False:
+		print("All packages have no CVE")
 	print('Are you true to continue? (y/n)')
 	userinput=input()
 	if userinput=='y':
