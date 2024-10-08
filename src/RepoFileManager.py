@@ -167,8 +167,7 @@ class RepoFileManager:
 		if name in self.packageMap:
 			for specificPackage in self.packageMap[name]:
 				if SpecificPackage.compareEntry(specificPackage.getSelfEntry(),e)==0:
-					if specificPackage.packageInfo.release is None or SpecificPackage.compareVersion(specificPackage.packageInfo.release,release)==0:
-						return specificPackage
+					return specificPackage
 		return None
 	def getAllPackages(self):
 		if self.enable is False:
