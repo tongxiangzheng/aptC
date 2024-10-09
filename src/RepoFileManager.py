@@ -154,8 +154,8 @@ class RepoFileManager:
 		else:
 			self.enable=False
 			return
-		packages=parseDEBPackages(data,osType,dist,url)
-		for package in packages:
+		self.packages=parseDEBPackages(data,osType,dist,url)
+		for package in self.packages:
 			self.packageMap[package.fullName].append(package)
 	def queryPackage(self,name,version,release):
 		if self.enable is False:
@@ -172,9 +172,6 @@ class RepoFileManager:
 	def getAllPackages(self):
 		if self.enable is False:
 			return []
-		res=[]
-		for packageList in self.packageMap.values():
-			res.extend(packageList)
-		return res
+		return self.packages
 		
 	
