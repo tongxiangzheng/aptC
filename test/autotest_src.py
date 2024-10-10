@@ -8,7 +8,7 @@ import normalize
 from subprocess import PIPE, Popen
 def autotest_src(name,fullname,version,release,checkExist=True):
 	if checkExist:
-		if os.path.isfile(f"./src/{name}"+normalize.normalReplace(f"{fullname}.spdx.json")):
+		if os.path.isfile(f"./src/{name}/"+normalize.normalReplace(f"{fullname}.spdx.json")):
 			return 0
 		if not os.path.isfile(f"./binary/{name}/"+normalize.normalReplace(f"{fullname}.spdx.json")):
 			return 0
@@ -42,7 +42,9 @@ def autotest_src(name,fullname,version,release,checkExist=True):
 	if srcFile is not None and srcFile2 is not None:
 		#cmd=f"python ../src/aptC.py scansrc {srcFile} {srcFile2} --genspdx=./src"
 		#print(cmd)
-		return aptC.user_main("apt",["scansrc",srcFile,srcFile2,"--genspdx=./src","-mode=split"], exit_code=False)
+		if not os.path.isdir(f"./src/{name}"):
+			os.mkdir(f"./src/{name}")
+		return aptC.user_main("apt",["scansrc",srcFile,srcFile2,f"--genspdx=./src/{name}","-mode=split"], exit_code=False)
 	else:
 		for t in zipType:
 			if release is None:
