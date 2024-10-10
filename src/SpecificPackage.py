@@ -191,7 +191,7 @@ class EntryMap:
 			return [name_versionEntry[res[0].fullName][1]]
 		if requireName in name_versionEntry:
 			return [name_versionEntry[requireName][1]]
-		log.warning("failed to decide require package for: "+entry.name+" in pacakge: "+packageName)
+		log.warning("failed to decide require package for: "+requireName+" in pacakge: "+packageName)
 		for r1 in res:
 			log.info(" one of provider is: "+r1.fullName)
 		log.info(" select: "+name_versionEntry[res[0].fullName][1].fullName)
