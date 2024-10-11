@@ -6,6 +6,9 @@ def normalReplace(s:str)->str:
 	s=s.replace('_','-underline-')
 	s=s.replace('@','-at-')
 	s=s.replace('/','-slash-')
+	s=s.replace('(','-leftBracket-')
+	s=s.replace(')','-rightBracket-')
+	s=s.replace(' ','-space-')
 	# s=s.replace('\','backslash')
 	return s
 
@@ -15,4 +18,7 @@ def reNormalReplace(s:str)->str:
 	s=s.replace('-underline-','_')
 	s=s.replace('-at-','@')
 	s=s.replace('-slash-','/')
+	s=s.replace('-leftBracket-','(')
+	s=s.replace('-rightBracket-',')')
+	s=s.replace('-space-',' ')
 	return s

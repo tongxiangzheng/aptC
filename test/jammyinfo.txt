@@ -20,6 +20,10 @@ apache2 apache2-dev 2.4.52 1ubuntu4.12
 apache2 apache2-doc 2.4.52 1ubuntu4.12
 apache2 apache2-ssl-dev 2.4.52 1ubuntu4.12
 apache2 apache2-utils 2.4.52 1ubuntu4.12
+apache2 libapache2-mod-proxy-uwsgi 2.4.52 1ubuntu4.12
+apache2 apache2-suexec-pristine 2.4.52 1ubuntu4.12
+apache2 apache2-suexec-custom 2.4.52 1ubuntu4.12
+apache2 libapache2-mod-md 2.4.52 1ubuntu4.12
 apparmor apparmor 3.0.4 2ubuntu2.4
 apparmor apparmor-profiles 3.0.4 2ubuntu2.4
 apparmor apparmor-utils 3.0.4 2ubuntu2.4
@@ -31,7 +35,10 @@ apport apport-retrace 2.20.11 0ubuntu82.6
 apt apt 2.4.13
 apt apt-doc 2.4.13
 apt apt-utils 2.4.13
+apt apt-transport-https 2.4.13
 autofs autofs 5.1.8 1ubuntu1.3
+autofs autofs-hesiod 5.1.8 1ubuntu1.3
+autofs autofs-ldap 5.1.8 1ubuntu1.3
 autopkgtest autopkgtest 5.32ubuntu3~22.04.1
 avahi avahi-autoipd 0.8 5ubuntu5.2
 avahi avahi-daemon 0.8 5ubuntu5.2
@@ -55,7 +62,16 @@ bind9 bind9-utils 9.18.28 0ubuntu0.22.04.1
 bluez bluez 5.64 0ubuntu1.3
 bluez bluez-cups 5.64 0ubuntu1.3
 bluez bluez-obexd 5.64 0ubuntu1.3
+bluez bluez-meshd 5.64 0ubuntu1.3
+bluez bluez-hcidump 5.64 0ubuntu1.3
+bluez bluetooth 5.64 0ubuntu1.3
+bluez bluez-tests 5.64 0ubuntu1.3
 brltty brltty 6.4 4ubuntu3
+brltty brltty-speechd 6.4 4ubuntu3
+brltty brltty-flite 6.4 4ubuntu3
+brltty brltty-espeak 6.4 4ubuntu3
+brltty brltty-x11 6.4 4ubuntu3
+brltty cl-brlapi 6.4 4ubuntu3
 util-linux bsdextrautils 2.37.2 4ubuntu3.4
 util-linux bsdutils 2.37.2 4ubuntu3.4
 busybox busybox-initramfs 1.30.1 7ubuntu3.1
@@ -79,12 +95,17 @@ clamav clamav-base 0.103.12+dfsg 0ubuntu0.22.04.1
 clamav clamav-daemon 0.103.12+dfsg 0ubuntu0.22.04.1
 clamav clamav-docs 0.103.12+dfsg 0ubuntu0.22.04.1
 clamav clamav-freshclam 0.103.12+dfsg 0ubuntu0.22.04.1
+clamav clamav-milter 0.103.12+dfsg 0ubuntu0.22.04.1
+clamav clamav-testfiles 0.103.12+dfsg 0ubuntu0.22.04.1
 clamav clamdscan 0.103.12+dfsg 0ubuntu0.22.04.1
 cloud-init cloud-init 24.3.1 0ubuntu0~22.04.1
 cmake cmake 3.22.1 1ubuntu1.22.04.2
 cmake cmake-data 3.22.1 1ubuntu1.22.04.2
 cmake cmake-doc 3.22.1 1ubuntu1.22.04.2
+cmake cmake-curses-gui 3.22.1 1ubuntu1.22.04.2
+cmake cmake-qt-gui 3.22.1 1ubuntu1.22.04.2
 cpio cpio 2.13+dfsg 7ubuntu0.1
+cpio cpio-win32 2.13+dfsg 7ubuntu0.1
 crash crash 8.0.0 1ubuntu1.1
 crmsh crmsh 4.3.1 1ubuntu3
 crmsh crmsh-doc 4.3.1 1ubuntu3
@@ -109,6 +130,7 @@ dbus dbus 1.12.20 2ubuntu4.1
 dbus dbus-1-doc 1.12.20 2ubuntu4.1
 dbus dbus-user-session 1.12.20 2ubuntu4.1
 dbus dbus-x11 1.12.20 2ubuntu4.1
+dbus dbus-tests 1.12.20 2ubuntu4.1
 debian-goodies debian-goodies 0.87ubuntu1.1
 debootstrap debootstrap 1.0.126+nmu1ubuntu0.7
 deja-dup deja-dup 42.9 1ubuntu3
@@ -130,6 +152,7 @@ distro-info-data distro-info-data 0.52ubuntu0.7
 dkms dkms 2.8.7 2ubuntu2.2
 dmidecode dmidecode 3.3 3ubuntu0.1
 dns-root-data dns-root-data 2023112702~ubuntu0.22.04.1
+dnsmasq dnsmasq 2.90 0ubuntu0.22.04.1
 dnsmasq dnsmasq-base 2.90 0ubuntu0.22.04.1
 dnsmasq dnsmasq-utils 2.90 0ubuntu0.22.04.1
 dpdk dpdk 21.11.6 0ubuntu0.22.04.1
@@ -163,7 +186,10 @@ erlang erlang-syntax-tools 24.2.1+dfsg 1ubuntu0.1
 erlang erlang-tftp 24.2.1+dfsg 1ubuntu0.1
 erlang erlang-tools 24.2.1+dfsg 1ubuntu0.1
 erlang erlang-xmerl 24.2.1+dfsg 1ubuntu0.1
+espeak-ng espeak-ng 1.50+dfsg 10ubuntu0.1
 espeak-ng espeak-ng-data 1.50+dfsg 10ubuntu0.1
+espeak-ng espeak-ng-espeak 1.50+dfsg 10ubuntu0.1
+espeak-ng espeak-ng-libespeak1 1.50+dfsg 10ubuntu0.1
 ethtool ethtool 5.16 1ubuntu0.1
 evince evince 42.3 0ubuntu3.1
 evince evince-common 42.3 0ubuntu3.1
@@ -182,6 +208,8 @@ exuberant-ctags exuberant-ctags 5.9~svn20110310 16ubuntu0.22.04.1
 util-linux fdisk 2.37.2 4ubuntu3.4
 fence-agents fence-agents-base 4.7.1 1ubuntu8.1
 fence-agents fence-agents-common 4.7.1 1ubuntu8.1
+fence-agents fence-agents-extra 4.7.1 1ubuntu8.1
+fence-agents fence-agents 4.7.1 1ubuntu8.1
 ubuntu-drivers-common fglrx-pxpress 0.9.6.2~0.22.04.7
 file file 5.41 3ubuntu0.1
 fonts-noto-color-emoji fonts-noto-color-emoji 2.042 0ubuntu0.22.04.1
@@ -199,13 +227,19 @@ freerdp2 freerdp2-dev 2.6.1+dfsg1 3ubuntu2.7
 frr frr 8.1 1ubuntu1.11
 frr frr-doc 8.1 1ubuntu1.11
 frr frr-pythontools 8.1 1ubuntu1.11
+frr frr-rpki-rtrlib 8.1 1ubuntu1.11
+frr frr-snmp 8.1 1ubuntu1.11
 fwupd fwupd 1.7.9 1~22.04.3
 fwupd fwupd-doc 1.7.9 1~22.04.3
+fwupd fwupd-tests 1.7.9 1~22.04.3
 fwupd-signed fwupd-signed 1.51.1~22.04.1+1.4 0ubuntu0.1
 gawk gawk 5.1.0 1ubuntu0.1
 gce-compute-image-packages gce-compute-image-packages 20240607.00 0ubuntu1~22.04.0
 gdb gdb 12.1 0ubuntu1~22.04.2
 gdb gdb-doc 12.1 0ubuntu1~22.04.2
+gdb gdb-multiarch 12.1 0ubuntu1~22.04.2
+gdb gdbserver 12.1 0ubuntu1~22.04.2
+gdb gdb-source 12.1 0ubuntu1~22.04.2
 gdm3 gdm3 42.0 1ubuntu7.22.04.4
 ghostscript ghostscript 9.55.0~dfsg1 0ubuntu5.9
 ghostscript ghostscript-doc 9.55.0~dfsg1 0ubuntu5.9
@@ -254,6 +288,9 @@ glance glance 24.2.1 0ubuntu1.2
 glance glance-api 24.2.1 0ubuntu1.2
 glance glance-common 24.2.1 0ubuntu1.2
 glibc glibc-doc 2.35 0ubuntu3.8
+glibc glibc-source 2.35 0ubuntu3.8
+glibc nscd 2.35 0ubuntu3.8
+glibc locales-all 2.35 0ubuntu3.8
 glusterfs glusterfs-cli 10.1 1ubuntu0.2
 glusterfs glusterfs-client 10.1 1ubuntu0.2
 glusterfs glusterfs-common 10.1 1ubuntu0.2
@@ -279,6 +316,12 @@ gnome-shell-extension-ubuntu-dock gnome-shell-extension-ubuntu-dock 72~ubuntu5.2
 gnupg2 gnupg 2.2.27 3ubuntu2.1
 gnupg2 gnupg-l10n 2.2.27 3ubuntu2.1
 gnupg2 gnupg-utils 2.2.27 3ubuntu2.1
+gnupg2 gnupg-agent 2.2.27 3ubuntu2.1
+gnupg2 gpgv2 2.2.27 3ubuntu2.1
+gnupg2 gpgv-static 2.2.27 3ubuntu2.1
+gnupg2 scdaemon 2.2.27 3ubuntu2.1
+gnupg2 gpgv-win32 2.2.27 3ubuntu2.1
+gnupg2 gnupg2 2.2.27 3ubuntu2.1
 gnutls28 gnutls-doc 3.7.3 4ubuntu1.5
 golang-1.17 golang-1.17-doc 1.17.13 3ubuntu1
 golang-1.18 golang-1.18 1.18.1 1ubuntu1.1
@@ -418,6 +461,8 @@ bluez libbluetooth3 5.64 0ubuntu1.3
 libbpf libbpf-dev 0.5.0 1ubuntu22.04.1
 libbpf libbpf0 0.5.0 1ubuntu22.04.1
 brltty libbrlapi-dev 6.4 4ubuntu3
+brltty libbrlapi-java 6.4 4ubuntu3
+brltty libbrlapi-jni 6.4 4ubuntu3
 brltty libbrlapi0.8 6.4 4ubuntu3
 c-ares libc-ares-dev 1.18.1 1ubuntu0.22.04.3
 c-ares libc-ares2 1.18.1 1ubuntu0.22.04.3
@@ -609,6 +654,7 @@ gst-plugins-good1.0 libgstreamer-plugins-good1.0-0 1.20.3 0ubuntu1.1
 gst-plugins-good1.0 libgstreamer-plugins-good1.0-dev 1.20.3 0ubuntu1.1
 gstreamer1.0 libgstreamer1.0-0 1.20.3 0ubuntu1
 gstreamer1.0 libgstreamer1.0-dev 1.20.3 0ubuntu1
+harfbuzz libharfbuzz-bin 2.7.4 1ubuntu3.1
 harfbuzz libharfbuzz-dev 2.7.4 1ubuntu3.1
 harfbuzz libharfbuzz-doc 2.7.4 1ubuntu3.1
 harfbuzz libharfbuzz-gobject0 2.7.4 1ubuntu3.1
@@ -771,6 +817,8 @@ pango1.0 libpango1.0-doc 1.50.6+ds 2ubuntu1
 pango1.0 libpangocairo-1.0-0 1.50.6+ds 2ubuntu1
 pango1.0 libpangoft2-1.0-0 1.50.6+ds 2ubuntu1
 pango1.0 libpangoxft-1.0-0 1.50.6+ds 2ubuntu1
+pango1.0 pango1.0-tests 1.50.6+ds 2ubuntu1
+pango1.0 libpango1.0-0 1.50.6+ds 2ubuntu1
 libpcap libpcap-dev 1.10.1 4ubuntu1.22.04.1
 libpcap libpcap0.8 1.10.1 4ubuntu1.22.04.1
 libpcap libpcap0.8-dev 1.10.1 4ubuntu1.22.04.1
@@ -841,6 +889,7 @@ libqmi libqmi-glib-dev 1.32.0 1ubuntu0.22.04.1
 libqmi libqmi-glib-doc 1.32.0 1ubuntu0.22.04.1
 libqmi libqmi-glib5 1.32.0 1ubuntu0.22.04.1
 libqmi libqmi-proxy 1.32.0 1ubuntu0.22.04.1
+libqmi libqmi-utils 1.32.0 1ubuntu0.22.04.1
 libraw libraw-dev 0.20.2 2ubuntu2.22.04.1
 libraw libraw-doc 0.20.2 2ubuntu2.22.04.1
 libraw libraw20 0.20.2 2ubuntu2.22.04.1
@@ -1262,6 +1311,7 @@ netplan.io netplan.io 0.106.1 7ubuntu0.22.04.4
 network-manager network-manager 1.36.6 0ubuntu2
 network-manager network-manager-config-connectivity-ubuntu 1.36.6 0ubuntu2
 network-manager network-manager-dev 1.36.6 0ubuntu2
+network-manager network-manager-config-connectivity-debian 1.36.6 0ubuntu2
 networkd-dispatcher networkd-dispatcher 2.1 2ubuntu0.22.04.2
 neutron neutron-common 20.5.0 0ubuntu1
 neutron neutron-dhcp-agent 20.5.0 0ubuntu1
@@ -1482,6 +1532,10 @@ python3-defaults python3-all-dev 3.10.6 1~22.04.1
 aodh python3-aodh 14.1.0 0ubuntu1
 apparmor python3-apparmor 3.0.4 2ubuntu2.4
 apport python3-apport 2.20.11 0ubuntu82.6
+apport apport-kde 2.20.11 0ubuntu82.6
+apport dh-apport 2.20.11 0ubuntu82.6
+apport apport-valgrind 2.20.11 0ubuntu82.6
+apport apport-noui 2.20.11 0ubuntu82.6
 python-apt python3-apt 2.4.0ubuntu4
 python-apt python3-apt-dbg 2.4.0ubuntu4
 barbican python3-barbican 14.0.2 0ubuntu1
@@ -1624,6 +1678,8 @@ samba samba-dsdb-modules 4.15.13+dfsg 0ubuntu1.6
 samba samba-libs 4.15.13+dfsg 0ubuntu1.6
 samba samba-vfs-modules 4.15.13+dfsg 0ubuntu1.6
 cyrus-sasl2 sasl2-bin 2.1.27+dfsg2 3ubuntu1.2
+cyrus-sasl2 libsasl2-modules-otp 2.1.27+dfsg2 3ubuntu1.2
+cyrus-sasl2 libsasl2-modules-ldap 2.1.27+dfsg2 3ubuntu1.2
 schroot schroot 1.6.10 12ubuntu3.1
 schroot schroot-common 1.6.10 12ubuntu3.1
 sg3-utils sg3-utils 1.46 1ubuntu0.22.04.1

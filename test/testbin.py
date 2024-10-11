@@ -1,6 +1,6 @@
 import autotest_binary
 
-testName="mutter"
+testName="bluez"
 with open("jammyinfo.txt") as f:
 	data=f.readlines()
 res=[]
@@ -18,4 +18,4 @@ for info in data:
 	else:
 		release=None
 	res.append((fullName,version,release))
-autotest_binary.autotest_binary(res,checkExist=False)
+autotest_binary.autotest_binary(testName,res,checkExist=False)
