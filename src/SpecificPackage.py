@@ -281,16 +281,15 @@ class SpecificPackage:
 				checkedRequireItems.add(requireName)
 				requireList=requires[requireName]
 				res=entryMap.queryRequires(self.fullName,requireName,requireList,True)
-				if self.fullName=="libenchant-2-2":
-					print("here")
-					print(requireName)
-				res=entryMap.queryRequires(self.fullName,requireName,requireList,False)
-				if requireName=="hunspell-en-us":
-					print(" hunspell-en-us")
-					print(res)
-				if requireName=="hunspell-dictionary":
-					print(" hunspell-dictionary")
-					print(res)
+				# if self.fullName=="libenchant-2-2":
+				# 	print("here")
+				# 	print(requireName)
+				# if requireName=="hunspell-en-us":
+				# 	print(" hunspell-en-us")
+				# 	print(res)
+				# if requireName=="hunspell-dictionary":
+				# 	print(" hunspell-dictionary")
+				# 	print(res)
 				for r in res:
 					if r not in requirePackageSet:
 						#print(res.fullName)
@@ -318,20 +317,20 @@ class SpecificPackage:
 					if require.queryIsQualified() is False:
 						needSolve=True
 						break
-				if self.fullName=="libenchant-2-2":
-					print("here")
-					print(requireName)
-					print(needSolve)
+				# if self.fullName=="libenchant-2-2":
+				# 	print("here")
+				# 	print(requireName)
+				# 	print(needSolve)
 				#print(needSolve)
 				if needSolve is False:
 					continue
 				res=entryMap.queryRequires(self.fullName,requireName,requireList,False)
-				if requireName=="hunspell-en-us":
-					print("hunspell-en-us")
-					print(res)
-				if requireName=="hunspell-dictionary":
-					print("hunspell-dictionary")
-					print(res)
+				# if requireName=="hunspell-en-us":
+				# 	print("hunspell-en-us")
+				# 	print(res)
+				# if requireName=="hunspell-dictionary":
+				# 	print("hunspell-dictionary")
+				# 	print(res)
 				
 				for r in res:
 					if r not in requirePackageSet:
