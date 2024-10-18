@@ -152,9 +152,6 @@ distro-info-data distro-info-data 0.52ubuntu0.7
 dkms dkms 2.8.7 2ubuntu2.2
 dmidecode dmidecode 3.3 3ubuntu0.1
 dns-root-data dns-root-data 2023112702~ubuntu0.22.04.1
-dnsmasq dnsmasq 2.90 0ubuntu0.22.04.1
-dnsmasq dnsmasq-base 2.90 0ubuntu0.22.04.1
-dnsmasq dnsmasq-utils 2.90 0ubuntu0.22.04.1
 dpdk dpdk 21.11.6 0ubuntu0.22.04.1
 dpkg dpkg 1.21.1ubuntu2.3
 dpkg dpkg-dev 1.21.1ubuntu2.3

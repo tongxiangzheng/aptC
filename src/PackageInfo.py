@@ -7,7 +7,7 @@ class PackageInfo:
 		self.name=name
 		self.gitLink=gitLink
 		self.arch=arch
-		self.version=version.split(':')[-1]
+		self.version=version
 		self.release=release
 		self.version=version
 	def dump(self):

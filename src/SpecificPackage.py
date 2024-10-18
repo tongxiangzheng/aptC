@@ -197,6 +197,8 @@ class EntryMap:
 		log.info(" select: "+name_versionEntry[res[0].fullName][1].fullName)
 		return [name_versionEntry[res[0].fullName][1]]
 		
+debugMode=True
+
 def getDependes_dfs(package,dependesSet:set,entryMap,includeInstalled):
 	if package in dependesSet:
 		return
@@ -205,13 +207,17 @@ def getDependes_dfs(package,dependesSet:set,entryMap,includeInstalled):
 	if package.status=='uninstalled':
 		package.status='willInstalled'
 	dependesSet.add(package)
-	package.findRequires(entryMap)
-	# if includeInstalled is True:
-	# 	print("%"+package.fullName,package.packageInfo.version,package.packageInfo.release,package.status)
-	# 	print("%",end="")
-	# 	for p in package.requirePointers:
-	# 		print(" "+p.fullName,end="")
-	# 	print("")
+	tag=1
+	if includeInstalled is True:
+		tag=2
+	package.findRequires(entryMap,tag)
+	if debugMode is True:
+		if includeInstalled is True:
+			print("%"+package.fullName,package.packageInfo.version,package.packageInfo.release,package.status,id(package))
+			print("%",end="")
+			for p in package.requirePointers:
+				print(" "+p.fullName,end="")
+			print("")
 	for p in package.requirePointers:
 		getDependes_dfs(p,dependesSet,entryMap,includeInstalled)	
 def getDependsPrepare(entryMap,package):
@@ -232,30 +238,31 @@ class SpecificPackage:
 		self.requiresInfo=requires
 		self.status=status
 		self.arch=arch
-		self.providesPointers=[]
+		#self.providesPointers=[] # need not this feature
 		self.requirePointers=[]
 		self.repoURL=repoURL
 		self.fileName=fileName
 		self.getGitLinked=False
 		self.source=source
 		self.registerProvided=False
-		self.haveFoundRequires=False
-	def addProvidesPointer(self,package):
-		#无需手动调用，addRequirePointer自动处理
-		self.providesPointers.append(package)
+		self.foundRequiresTag=0
+	# def addProvidesPointer(self,package):
+	# 	#无需手动调用，addRequirePointer自动处理
+	# 	self.providesPointers.append(package)
 	def addRequirePointer(self,package):
 		self.requirePointers.append(package)
-		package.addProvidesPointer(self)
+		# package.addProvidesPointer(self)
 	def registerProvides(self,entryMap:EntryMap)->None:
 		if self.registerProvided is True:
 			return
 		self.registerProvided=True
 		for provide in self.providesInfo:
 			entryMap.registerEntry(provide,self)
-	def findRequires(self,entryMap:EntryMap)->None:
-		if self.haveFoundRequires is True:
+	def findRequires(self,entryMap:EntryMap,tag:int)->None:
+		if self.foundRequiresTag==tag:
 			return
-		self.haveFoundRequires=True
+		self.foundRequiresTag=tag
+		self.clearRequires()
 		requirePackageSet=set()
 		requires=dict()
 		for requireEntrys in self.requiresInfo:
@@ -274,6 +281,16 @@ class SpecificPackage:
 				checkedRequireItems.add(requireName)
 				requireList=requires[requireName]
 				res=entryMap.queryRequires(self.fullName,requireName,requireList,True)
+				if self.fullName=="libenchant-2-2":
+					print("here")
+					print(requireName)
+				res=entryMap.queryRequires(self.fullName,requireName,requireList,False)
+				if requireName=="hunspell-en-us":
+					print(" hunspell-en-us")
+					print(res)
+				if requireName=="hunspell-dictionary":
+					print(" hunspell-dictionary")
+					print(res)
 				for r in res:
 					if r not in requirePackageSet:
 						#print(res.fullName)
@@ -285,6 +302,9 @@ class SpecificPackage:
 			return
 		checkedRequireItems=set()
 		for requireEntrys in self.requiresInfo:
+			# if tag==1:
+			# 	if len(requireEntrys.entrys)>1:
+			# 		continue
 			for require in requireEntrys.entrys:
 				requireName=require.name
 				if requireName in checkedRequireItems:
@@ -298,10 +318,21 @@ class SpecificPackage:
 					if require.queryIsQualified() is False:
 						needSolve=True
 						break
+				if self.fullName=="libenchant-2-2":
+					print("here")
+					print(requireName)
+					print(needSolve)
 				#print(needSolve)
 				if needSolve is False:
 					continue
 				res=entryMap.queryRequires(self.fullName,requireName,requireList,False)
+				if requireName=="hunspell-en-us":
+					print("hunspell-en-us")
+					print(res)
+				if requireName=="hunspell-dictionary":
+					print("hunspell-dictionary")
+					print(res)
+				
 				for r in res:
 					if r not in requirePackageSet:
 						#print(res.fullName)
@@ -309,8 +340,11 @@ class SpecificPackage:
 							require.setQualified()
 						self.addRequirePointer(r)
 						requirePackageSet.add(r)
+	def clearRequires(self):
+		self.haveFoundRequires=False
+		self.requirePointers=[]
 	def dump(self):
-		print(self.fullName,self.packageInfo.version,self.packageInfo.release,self.status)
+		print(self.fullName,self.packageInfo.version,self.packageInfo.release,self.status,id(self))
 		for p in self.requirePointers:
 			print(" "+p.fullName,end="")
 		print("")

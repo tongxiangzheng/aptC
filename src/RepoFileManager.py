@@ -3,7 +3,14 @@ import os
 import lz4.frame
 
 import SpecificPackage
-
+def splitVersionRelease(version_release):
+	version_release=version_release.strip().rsplit('-',1)
+	version=version_release[0]
+	if len(version_release)>1:
+		release=version_release[1]
+	else:
+		release=None
+	return version,release
 def parseDEBItemInfo(item):
 	item=item.strip()
 	name=None
@@ -17,52 +24,31 @@ def parseDEBItemInfo(item):
 		parse=v.split('=')
 		if len(parse)>1:
 			flags="EQ"
-			p2=parse[1].strip().split('-')
-			version=p2[0]
-			if len(p2)<1:
-				release=p2[1].split('.')[0]
+			version,release=splitVersionRelease(parse[1])
 		parse=v.split('<')
 		if len(parse)>1:
 			flags="LE"
-			p2=parse[1].strip().split('-')
-			version=p2[0]
-			if len(p2)<1:
-				release=p2[1].split('.')[0]
+			version,release=splitVersionRelease(parse[1])
 		parse=v.split('<=')
 		if len(parse)>1:
 			flags="LE"
-			p2=parse[1].strip().split('-')
-			version=p2[0]
-			if len(p2)<1:
-				release=p2[1].split('.')[0]
+			version,release=splitVersionRelease(parse[1])
 		parse=v.split('<<')
 		if len(parse)>1:
 			flags="LT"
-			p2=parse[1].strip().split('-')
-			version=p2[0]
-			if len(p2)<1:
-				release=p2[1].split('.')[0]
+			version,release=splitVersionRelease(parse[1])
 		parse=v.split('>')
 		if len(parse)>1:
 			flags="GE"
-			p2=parse[1].strip().split('-')
-			version=p2[0]
-			if len(p2)<1:
-				release=p2[1].split('.')[0]
+			version,release=splitVersionRelease(parse[1])
 		parse=v.split('>=')
 		if len(parse)>1:
 			flags="GE"
-			p2=parse[1].strip().split('-')
-			version=p2[0]
-			if len(p2)<1:
-				release=p2[1].split('.')[0]
+			version,release=splitVersionRelease(parse[1])
 		parse=v.split('>>')
 		if len(parse)>1:
 			flags="GT"
-			p2=parse[1].strip().split('-')
-			version=p2[0]
-			if len(p2)<1:
-				release=p2[1].split('.')[0]
+			version,release=splitVersionRelease(parse[1])
 		# In dpkg document:
 		# The < and > operators are obsolete and should not be used, due to confusing semantics.
 		# To illustrate: 0.1 < 0.1 evaluates to true.
