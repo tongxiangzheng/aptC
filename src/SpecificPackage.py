@@ -197,7 +197,7 @@ class EntryMap:
 		log.info(" select: "+name_versionEntry[res[0].fullName][1].fullName)
 		return [name_versionEntry[res[0].fullName][1]]
 		
-debugMode=True
+debugMode=False
 
 def getDependes_dfs(package,dependesSet:set,entryMap,includeInstalled):
 	if package in dependesSet:

@@ -229,7 +229,6 @@ frr frr-snmp 8.1 1ubuntu1.11
 fwupd fwupd 1.7.9 1~22.04.3
 fwupd fwupd-doc 1.7.9 1~22.04.3
 fwupd fwupd-tests 1.7.9 1~22.04.3
-fwupd-signed fwupd-signed 1.51.1~22.04.1+1.4 0ubuntu0.1
 gawk gawk 5.1.0 1ubuntu0.1
 gce-compute-image-packages gce-compute-image-packages 20240607.00 0ubuntu1~22.04.0
 gdb gdb 12.1 0ubuntu1~22.04.2
@@ -266,7 +265,6 @@ gst-plugins-base1.0 gir1.2-gst-plugins-base-1.0 1.20.1 1ubuntu0.2
 gstreamer1.0 gir1.2-gstreamer-1.0 1.20.3 0ubuntu1
 harfbuzz gir1.2-harfbuzz-0.0 2.7.4 1ubuntu3.1
 libreoffice gir1.2-lokdocview-0.1 7.3.7 0ubuntu0.22.04.7
-libmbim gir1.2-mbim-1.0 1.28.0 1~ubuntu20.04.1
 modemmanager gir1.2-modemmanager-1.0 1.20.0 1~ubuntu22.04.4
 mutter gir1.2-mutter-10 42.9 0ubuntu9
 nautilus gir1.2-nautilus-3.0 42.6 0ubuntu1
@@ -275,8 +273,7 @@ libnotify gir1.2-notify-0.7 0.7.9 3ubuntu5.22.04.1
 pango1.0 gir1.2-pango-1.0 1.50.6+ds 2ubuntu1
 poppler gir1.2-poppler-0.18 22.02.0 2ubuntu0.5
 libqmi gir1.2-qmi-1.0 1.32.0 1ubuntu0.22.04.1
-librsvg gir1.2-rsvg-2.0 2.52.5+dfsg 3ubuntu0.2
-vte2.91 gir1.2-vte-2.91 0.68.0 1ubuntu0.1
+#vte2.91 gir1.2-vte-2.91 0.68.0 1ubuntu0.1
 git git 2.34.1 1ubuntu1.11
 git git-doc 2.34.1 1ubuntu1.11
 git git-man 2.34.1 1ubuntu1.11
@@ -298,18 +295,17 @@ gnome-control-center gnome-control-center-dev 41.7 0ubuntu0.22.04.8
 gnome-control-center gnome-control-center-faces 41.7 0ubuntu0.22.04.8
 gnome-desktop gnome-desktop-3-tests 42.9 0ubuntu1
 gnome-desktop gnome-desktop3-data 42.9 0ubuntu1
-gnome-initial-setup gnome-initial-setup 42.0.1 1ubuntu2.3
+#gnome-initial-setup gnome-initial-setup 42.0.1 1ubuntu2.3
 gnome-keyring gnome-keyring 40.0 3ubuntu3
 gnome-keyring gnome-keyring-pkcs11 40.0 3ubuntu3
 gnome-remote-desktop gnome-remote-desktop 42.9 0ubuntu0.22.04.2
-libcanberra gnome-session-canberra 0.30 10ubuntu1.22.04.1
 gnome-settings-daemon gnome-settings-daemon 42.1 1ubuntu2.2
 gnome-settings-daemon gnome-settings-daemon-common 42.1 1ubuntu2.2
 gnome-settings-daemon gnome-settings-daemon-dev 42.1 1ubuntu2.2
-gnome-shell gnome-shell 42.9 0ubuntu2.2
-gnome-shell gnome-shell-common 42.9 0ubuntu2.2
-gnome-shell-extension-desktop-icons-ng gnome-shell-extension-desktop-icons-ng 43 2ubuntu1
-gnome-shell-extension-ubuntu-dock gnome-shell-extension-ubuntu-dock 72~ubuntu5.22.04.2.1
+#gnome-shell gnome-shell 42.9 0ubuntu2.2
+#gnome-shell gnome-shell-common 42.9 0ubuntu2.2
+#gnome-shell-extension-desktop-icons-ng gnome-shell-extension-desktop-icons-ng 43 2ubuntu1
+#gnome-shell-extension-ubuntu-dock gnome-shell-extension-ubuntu-dock 72~ubuntu5.22.04.2.1
 gnupg2 gnupg 2.2.27 3ubuntu2.1
 gnupg2 gnupg-l10n 2.2.27 3ubuntu2.1
 gnupg2 gnupg-utils 2.2.27 3ubuntu2.1
@@ -320,7 +316,6 @@ gnupg2 scdaemon 2.2.27 3ubuntu2.1
 gnupg2 gpgv-win32 2.2.27 3ubuntu2.1
 gnupg2 gnupg2 2.2.27 3ubuntu2.1
 gnutls28 gnutls-doc 3.7.3 4ubuntu1.5
-golang-1.17 golang-1.17-doc 1.17.13 3ubuntu1
 golang-1.18 golang-1.18 1.18.1 1ubuntu1.1
 golang-1.18 golang-1.18-doc 1.18.1 1ubuntu1.1
 golang-1.18 golang-1.18-go 1.18.1 1ubuntu1.1
@@ -476,14 +471,6 @@ glibc libc6-prof 2.35 0ubuntu3.8
 glibc libc6-x32 2.35 0ubuntu3.8
 evolution-data-server libcamel-1.2-63 3.44.4 0ubuntu1.1
 evolution-data-server libcamel1.2-dev 3.44.4 0ubuntu1.1
-libcanberra libcanberra-dev 0.30 10ubuntu1.22.04.1
-libcanberra libcanberra-doc 0.30 10ubuntu1.22.04.1
-libcanberra libcanberra-gtk-common-dev 0.30 10ubuntu1.22.04.1
-libcanberra libcanberra-gtk3-0 0.30 10ubuntu1.22.04.1
-libcanberra libcanberra-gtk3-dev 0.30 10ubuntu1.22.04.1
-libcanberra libcanberra-gtk3-module 0.30 10ubuntu1.22.04.1
-libcanberra libcanberra-pulse 0.30 10ubuntu1.22.04.1
-libcanberra libcanberra0 0.30 10ubuntu1.22.04.1
 libcap2 libcap-dev 2.44 1ubuntu0.22.04.1
 libcap2 libcap2 2.44 1ubuntu0.22.04.1
 libcap2 libcap2-bin 2.44 1ubuntu0.22.04.1
@@ -1211,10 +1198,10 @@ libvirt libvirt0 8.0.0 1ubuntu7.10
 libvpx libvpx-dev 1.11.0 2ubuntu2.3
 libvpx libvpx-doc 1.11.0 2ubuntu2.3
 libvpx libvpx7 1.11.0 2ubuntu2.3
-vte2.91 libvte-2.91-0 0.68.0 1ubuntu0.1
-vte2.91 libvte-2.91-common 0.68.0 1ubuntu0.1
-vte2.91 libvte-2.91-dev 0.68.0 1ubuntu0.1
-vte2.91 libvte-2.91-doc 0.68.0 1ubuntu0.1
+#vte2.91 libvte-2.91-0 0.68.0 1ubuntu0.1
+#vte2.91 libvte-2.91-common 0.68.0 1ubuntu0.1
+#vte2.91 libvte-2.91-dev 0.68.0 1ubuntu0.1
+#vte2.91 libvte-2.91-doc 0.68.0 1ubuntu0.1
 wayland libwayland-bin 1.20.0 1ubuntu0.1
 wayland libwayland-client0 1.20.0 1ubuntu0.1
 wayland libwayland-cursor0 1.20.0 1ubuntu0.1

@@ -1,5 +1,5 @@
 import autotest_src
-testName="apport"
+testName="gnome-settings-daemon"
 with open("jammyinfo.txt") as f:
 	data=f.readlines()
 res=[]
