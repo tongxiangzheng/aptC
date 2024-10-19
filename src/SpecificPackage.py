@@ -157,7 +157,7 @@ class EntryMap:
 		self.provideEntryPackages=defaultdict(defaultNoneList)
 	def registerEntry(self,entry:PackageEntry,package):
 		self.provideEntryPackages[entry.name].append((package,entry))
-	def queryRequires(self,packageName,requireName:str,entrys:list,mustInstalled:bool):
+	def queryRequires(self,packageName,requireName:str,entrys:list,mustInstalled:bool,tag:int):
 		# requireName==entrys[i].name
 		infoList=self.provideEntryPackages[requireName]
 		res=[]
@@ -191,6 +191,8 @@ class EntryMap:
 			return [name_versionEntry[res[0].fullName][1]]
 		if requireName in name_versionEntry:
 			return [name_versionEntry[requireName][1]]
+		if tag==1:
+			return []
 		log.warning("failed to decide require package for: "+requireName+" in pacakge: "+packageName)
 		for r1 in res:
 			log.info(" one of provider is: "+r1.fullName)
@@ -280,7 +282,7 @@ class SpecificPackage:
 				#print(requireName)
 				checkedRequireItems.add(requireName)
 				requireList=requires[requireName]
-				res=entryMap.queryRequires(self.fullName,requireName,requireList,True)
+				res=entryMap.queryRequires(self.fullName,requireName,requireList,True,tag)
 				# if self.fullName=="libenchant-2-2":
 				# 	print("here")
 				# 	print(requireName)
@@ -324,7 +326,7 @@ class SpecificPackage:
 				#print(needSolve)
 				if needSolve is False:
 					continue
-				res=entryMap.queryRequires(self.fullName,requireName,requireList,False)
+				res=entryMap.queryRequires(self.fullName,requireName,requireList,False,tag)
 				# if requireName=="hunspell-en-us":
 				# 	print("hunspell-en-us")
 				# 	print(res)
