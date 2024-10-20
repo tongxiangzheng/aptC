@@ -55,6 +55,7 @@ def scandeb(command,options,packages,genSpdx=True,saveSpdxPath=None,genCyclonedx
 	getNewInstallRes=getNewInstall.getNewInstall(packages,options,sourcesListManager,dumpFileOnly)
 	if getNewInstallRes is None:
 		return True
+	haveOutput=False
 	for selectedPackage,willInstallPackages in getNewInstallRes.items():
 		if len(willInstallPackages)>0:
 			noPackagesWillInstalled=False
@@ -95,7 +96,6 @@ def scandeb(command,options,packages,genSpdx=True,saveSpdxPath=None,genCyclonedx
 			if projectName not in project_packages:
 				selectedPackage_cves.extend(c)
 		cves[selectedPackage.packageInfo.name]=selectedPackage_cves
-		haveOutput=False
 		for projectName,cves in cves.items():
 			if len(cves)==0:
 				continue

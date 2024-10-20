@@ -9,7 +9,6 @@ class PackageInfo:
 		self.arch=arch
 		self.version=version
 		self.release=release
-		self.version=version
 	def dump(self):
 		info={'osType':self.osType,'dist':self.dist,'name':self.name,'version':self.version,'release':self.release}
 		if self.gitLink is not None:

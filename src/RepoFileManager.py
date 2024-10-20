@@ -92,10 +92,8 @@ def parseDEBPackages(repoInfos,osType,dist,repoURL)->list:
 			source=info.split(' ',1)[1]
 			name=info.split(' ',2)[1]
 		if info.startswith("Version:"):
-			version_release=info.split(' ',1)[1].rsplit('-',1)
-			version=version_release[0].split(':')[-1]
-			if len(version_release)>1:
-				release=version_release[1]
+			version_release=info.split(' ',1)[1]
+			version,release=splitVersionRelease(version_release)
 		if info.startswith("Architecture:"):
 			arch=info.split(' ',1)[1]
 		if info.startswith("Depends:") or info.startswith("Pre-Depends:") or info.startswith("Recommends:"):
