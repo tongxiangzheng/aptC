@@ -77,8 +77,8 @@ class PackageEntrys:
 		return self.qualified
 class PackageEntry:
 	def __init__(self,name:str,flags:str,version:str,release:str):
-		if name=="python3:any":
-			name="python3"
+		if name.endswith(":any"):
+			name=name.rsplit(":",1)[0]
 		self.name=name
 		self.flags=flags
 		if version is not None:
