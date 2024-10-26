@@ -14,7 +14,7 @@ def querypackageInfo(filePaths):
 			return None
 		p = subprocess.Popen(f"dpkg -i '{filePath}'", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		stdout, stderr = p.communicate()
-		package=RepoFileManager.parseDEBPackages(stdout.split('\n'),osInfo.OSName,osInfo.OSDist,"")[0]
+		package=RepoFileManager.parseDEBPackages(stdout.decode().split('\n'),osInfo.OSName,osInfo.OSDist,"")[0]
 		package.fileName=filePath
 		res.append(package)
 	return res
