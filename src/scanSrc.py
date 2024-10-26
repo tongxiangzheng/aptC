@@ -119,7 +119,7 @@ def extractSrc(srcFile,srcFile2,distPath):
 	if srcFile2:
 		unzip(srcFile2,projectPath)
 	return projectPath
-def scansrc(srcs,options):
+def scanSrc(srcs,options):
 	mode="merge"
 	genSpdx=False
 	spdxPath='.'

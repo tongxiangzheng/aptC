@@ -2,7 +2,7 @@ import getNewInstall
 import SourcesListManager
 import nwkTools
 from loguru import logger as log
-from spdx.spdxmain import spdxmain 
+from spdx.spdxmain import spdxmain
 import normalize
 import json
 import requests
