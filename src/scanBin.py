@@ -5,14 +5,18 @@ import SpecificPackage
 import scanSrc
 import os
 import subprocess
+import shutil
 from spdx.spdxmain import spdxmain
 def querypackageInfo(filePaths):
 	res=[]
 	for filePath in filePaths:
 		if not os.path.isfile(filePath):
 			print("cannot open file: "+filePath)
-			return None
-		p = subprocess.Popen(f"dpkg -i '{filePath}'", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+			return []
+		if not os.path.exists("/tmp/aptC/packages"):
+			os.makedirs("/tmp/aptC/packages")
+		filePath=shutil.copy(filePath,"/tmp/aptC/packages")
+		p = subprocess.Popen(f"dpkg -I '{filePath}'", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		stdout, stderr = p.communicate()
 		package=RepoFileManager.parseDEBPackages(stdout.decode().split('\n'),osInfo.OSName,osInfo.OSDist,"")[0]
 		package.fileName=filePath
