@@ -351,7 +351,10 @@ class SpecificPackage:
 		print("")
 	def getSelfEntry(self):
 		return self.providesInfo[-1]
+	def setDscLink(self):
+		self.packageInfo.dscLink=DscParser.getDscFileLink(self)
 	def setGitLink(self):
+		log.warning("setGitLink function is abandoned")
 		if self.getGitLinked is True:
 			return
 		gitLink=DscParser.getGitLink(self)

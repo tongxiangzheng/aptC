@@ -205,7 +205,7 @@ def scanSrc(srcs,options):
 			depset=SpecificPackage.getDepends(entryMap,package,set())
 			depends=dict()
 			for p in depset:
-				p.setGitLink()
+				p.setDscLink()
 				depends[p.packageInfo.name+'@'+p.packageInfo.version]=p.packageInfo.dumpAsDict()
 			dependsList=list(depends.values())
 			if genSpdx is True:

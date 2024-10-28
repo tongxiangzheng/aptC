@@ -30,7 +30,7 @@ def queryCVE(spdxObj,aptConfigure:loadConfig.aptcConfigure):
 	else:
 		print(f'failed to query CVE: Request failed with status code {response.status_code}')
 		return None
-def scandeb(command,options,packages,genSpdx=True,saveSpdxPath=None,genCyclonedx=False,saveCyclonedxPath=None,dumpFileOnly=False):
+def scanDeb(command,options,packages,genSpdx=True,saveSpdxPath=None,genCyclonedx=False,saveCyclonedxPath=None,dumpFileOnly=False):
 	assumeNo=False
 	noPackagesWillInstalled=True
 	for option in options:
@@ -64,7 +64,7 @@ def scandeb(command,options,packages,genSpdx=True,saveSpdxPath=None,genCyclonedx
 		depends=dict()
 		project_packages=dict()
 		for p in willInstallPackages:
-			p.setGitLink()
+			p.setDscLink()
 			depends[p.packageInfo.name+'@'+p.packageInfo.version]=p.packageInfo.dumpAsDict()
 			if p.packageInfo.name not in project_packages:
 				project_packages[p.packageInfo.name]=[]
