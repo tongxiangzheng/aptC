@@ -20,6 +20,7 @@ class PackageInfo:
 		if self.release is not None:
 			release="-"+self.release
 		version=self.version+release
+		
 		info={'name':normalize.normalReplace(self.name),'version':normalize.normalReplace(version),'purl':self.dumpAsPurl()}
 		if self.dscLink is not None:
 			info['dscLink']=self.dscLink
@@ -30,10 +31,22 @@ class PackageInfo:
 		release=""
 		if self.release is not None:
 			release="-"+self.release
-		if self.dscLink is None:
-			return 'pkg:'+osKind+'/'+self.osType+'/'+normalize.normalReplace(self.name)+'@'+normalize.normalReplace(self.version+release)+'.'+normalize.normalReplace(self.dist)
-		else:
-			return 'pkg:'+osKind+'/'+self.osType+'/'+normalize.normalReplace(self.name)+'@'+normalize.normalReplace(self.version+release)+'.'+normalize.normalReplace(self.dist)+"?"+"dscLink="+normalize.normalReplace(self.dscLink)
+		extraInfos=dict()
+		if self.arch is not None and self.arch!="":
+			extraInfos['arch']=self.arch
+		if self.dscLink is not None:
+			extraInfos['dscLink']=self.dscLink
+		extraInfoRaw=''
+		is_first=True
+		for item,value in extraInfos.items():
+			if is_first is True:
+				extraInfoRaw+='?'
+			else:
+				extraInfoRaw+='&'
+			extraInfoRaw+=item+'='+value
+		
+		return 'pkg:'+osKind+'/'+self.osType+'/'+normalize.normalReplace(self.name)+'@'+normalize.normalReplace(self.version+release)+'.'+normalize.normalReplace(self.dist)+extraInfoRaw
+		
 
 def loadPurl(purlStr):
 	info=purlStr.split(':',1)[1]

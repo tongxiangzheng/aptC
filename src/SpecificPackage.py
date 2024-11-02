@@ -57,6 +57,10 @@ def compareVersion(version1,version2):
 		return 1
 	return 0
 def compareEntry(a,b):
+	if a.epoch is not None and b.epoch is not None:
+		r=compareVersion(a.epoch,b.epoch)
+		if r!=0:
+			return r
 	r=compareVersion(a.version,b.version)
 	if r!=0:
 		return r
@@ -81,8 +85,10 @@ class PackageEntry:
 			name=name.rsplit(":",1)[0]
 		self.name=name
 		self.flags=flags
+		self.epoch=None
 		if version is not None:
-			version=version.split(':')[-1]
+			self.epoch=version.split(':')[0]
+			version=version.split(':',1)[1]
 		self.version=version
 		self.release=release
 		self.fatherNode=None
