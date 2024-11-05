@@ -32,3 +32,15 @@ def getGitLink(specPackageInfo):
 		return None
 	gitLink=parseDscFile(dscFilePath)
 	return gitLink
+
+
+def getDscFileLink(specPackageInfo):
+	repoURL=specPackageInfo.repoURL
+	if repoURL is None or specPackageInfo.fileName == "":
+		return None
+	version=specPackageInfo.fileName.rsplit('_',2)[1]
+	source=specPackageInfo.source.split(' ')
+	if len(source)>1:
+		version=source[1].strip()[1:-1]
+	dscFileName=specPackageInfo.fileName.rsplit('/',1)[0]+'/'+specPackageInfo.packageInfo.name+'_'+version+".dsc"
+	return repoURL+dscFileName

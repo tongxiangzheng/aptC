@@ -4,14 +4,14 @@ DIR=os.path.split(os.path.abspath(__file__))[0]
 sys.path.insert(0,os.path.join(DIR,'..','src'))
 import normalize
 import aptC
-def autotest_binary(infos,checkExist=True):
+def autotest_binary(projectName,infos,checkExist=True):
 	if checkExist:
 		for info in infos:
-			if os.path.isfile("./binary/"+normalize.normalReplace(f"{info[0]}.spdx.json")):
+			if os.path.isfile(f"./binary/{projectName}/"+normalize.normalReplace(f"{info[0]}.spdx.json")):
 				return 0
-	for name,version,release in infos:
-		if "~" in version or (release is not None and "~" in release):
-			return 0
+	# for name,version,release in infos:
+	# 	if "~" in version or (release is not None and "~" in release):
+	# 		return 0
 	print("-------")
 	packages=["genspdx"]
 	for name,version,release in infos:
@@ -20,7 +20,9 @@ def autotest_binary(infos,checkExist=True):
 			packages.append(f"{name}={version}-{release}")
 		else:
 			packages.append(f"{name}={version}")
-	packages.append("binary")
+	if not os.path.isdir(f"./binary/{projectName}"):
+		os.mkdir(f"./binary/{projectName}")
+	packages.append(f"binary/{projectName}")
 	#for info in packages:
 	#	print(info,end=' ')
 	#print("")
@@ -45,7 +47,7 @@ if __name__ == "__main__":
 			nameMap[name]=[]
 		nameMap[name].append((fullName,version,release))
 	for name,infos in nameMap.items():
-		if autotest_binary(infos)!=0:
+		if autotest_binary(name,infos)!=0:
 			print(infos)
 			break
 		

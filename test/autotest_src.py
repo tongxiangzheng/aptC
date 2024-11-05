@@ -8,10 +8,10 @@ import normalize
 from subprocess import PIPE, Popen
 def autotest_src(name,fullname,version,release,checkExist=True):
 	if checkExist:
-		if os.path.isfile("./src/"+normalize.normalReplace(f"{fullname}.spdx.json")):
+		if os.path.isfile(f"./src/{name}/"+normalize.normalReplace(f"{fullname}.spdx.json")):
 			return 0
-	if "~" in version or (release is not None and "~" in release):
-		return 0
+		if not os.path.isfile(f"./binary/{name}/"+normalize.normalReplace(f"{fullname}.spdx.json")):
+			return 0
 	print(name,version,release)
 	version=version.split(':')[-1]
 	if release is None:
@@ -42,7 +42,9 @@ def autotest_src(name,fullname,version,release,checkExist=True):
 	if srcFile is not None and srcFile2 is not None:
 		#cmd=f"python ../src/aptC.py scansrc {srcFile} {srcFile2} --genspdx=./src"
 		#print(cmd)
-		return aptC.user_main("apt",["scansrc",srcFile,srcFile2,"--genspdx=./src","-mode=split"], exit_code=False)
+		if not os.path.isdir(f"./src/{name}"):
+			os.mkdir(f"./src/{name}")
+		return aptC.user_main("apt",["scansrc",srcFile,srcFile2,f"--genspdx=./src/{name}","-mode=split"], exit_code=False)
 	else:
 		for t in zipType:
 			if release is None:
@@ -61,7 +63,9 @@ def autotest_src(name,fullname,version,release,checkExist=True):
 			print("error: no src file")
 			return 1
 		else:
-			return aptC.user_main("apt",["scansrc",srcFile,"--genspdx=./src","-mode=split"], exit_code=False)
+			if not os.path.isdir(f"./src/{name}"):
+				os.mkdir(f"./src/{name}")
+			return aptC.user_main("apt",["scansrc",srcFile,f"--genspdx=./src/{name}","-mode=split"], exit_code=False)
 
 if __name__ == "__main__":
 	with open("jammyinfo.txt") as f:
@@ -84,4 +88,4 @@ if __name__ == "__main__":
 		#autotest_deb(name,version,release)
 		if autotest_src(name,fullname,version,release) != 0:
 			print(name,version,release)
-			break
+			#break

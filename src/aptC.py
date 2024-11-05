@@ -1,7 +1,8 @@
 import sys
 import os
-import scandeb
-import scansrc
+import scanDeb
+import scanBin
+import scanSrc
 
 def runApt(exec,args,setyes=False):
 	cmd=exec
@@ -54,7 +55,7 @@ def user_main(exec,args, exit_code=False):
 	if errcode is None:
 		command,options,packages=parseCommand(args)
 		if command=='install' or command=='reinstall':
-			if scandeb.scandeb(command,options,packages) is True:
+			if scanDeb.scanDeb(command,options,packages) is True:
 				runApt(exec,args,setyes=True)
 			else:
 				errcode=0
@@ -62,16 +63,18 @@ def user_main(exec,args, exit_code=False):
 			if len(packages)<2:
 				print("unknown usage for apt genspdx")
 				return 1
-			scandeb.scandeb(command,options,packages[:-1],genSpdx=True,saveSpdxPath=packages[-1],genCyclonedx=False,saveCyclonedxPath=None,dumpFileOnly=True)
+			scanDeb.scanDeb(command,options,packages[:-1],genSpdx=True,saveSpdxPath=packages[-1],genCyclonedx=False,saveCyclonedxPath=None,dumpFileOnly=True)
 			return 0
 		elif command=='gencyclonedx':
 			if len(packages)<2:
 				print("unknown usage for apt gencyclonedx")
 				return 1
-			scandeb.scandeb(command,options,packages[:-1],genSpdx=False,saveSpdxPath=None,genCyclonedx=True,saveCyclonedxPath=packages[1],dumpFileOnly=True)
+			scanDeb.scanDeb(command,options,packages[:-1],genSpdx=False,saveSpdxPath=None,genCyclonedx=True,saveCyclonedxPath=packages[1],dumpFileOnly=True)
 			return 0
+		elif command=='scanbin':
+			errcode=scanBin.scanBin(packages,options)
 		elif command=='scansrc':
-			errcode=scansrc.scansrc(packages,options)
+			errcode=scanSrc.scanSrc(packages,options)
 	if errcode is None:
 		errcode=runApt(exec,args)
 

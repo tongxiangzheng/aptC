@@ -5,14 +5,7 @@ from subprocess import PIPE, Popen
 import osInfo
 import RepoFileManager
 from loguru import logger as log
-def getSelfDist():
-	with open("/etc/os-release") as f:
-		data=f.readlines()
-		for info in data:
-			if info.startswith('VERSION_CODENAME='):
-				return info.strip()[17:]	
-	return ""
-selfDist=getSelfDist()
+
 def parseInstallInfo(info:str,sourcesListManager:SourcesListManager.SourcesListManager)->SpecificPackage.SpecificPackage:
 	info=info.strip()
 	while info.endswith(']'):
@@ -20,11 +13,8 @@ def parseInstallInfo(info:str,sourcesListManager:SourcesListManager.SourcesListM
 	info=info.split(' ',2)
 	name=info[1]
 	additionalInfo=info[2].split(']')[-2].strip()[1:].split(' ')
-	version_release=additionalInfo[0].rsplit('-',1)
-	version=version_release[0].split(':')[-1]
-	release=None
-	if len(version_release)>1:
-		release=version_release[1]
+	version_release=additionalInfo[0]
+	version,release=RepoFileManager.splitVersionRelease(version_release)
 	dist=additionalInfo[1].split('/')[1].split(',')[0]
 	#arch=additionalInfo[-1][1:-1]
 	#packageInfo=PackageInfo.PackageInfo('Ubuntu',dist,name,version,release,arch)
@@ -58,11 +48,8 @@ def getInstalledPackagesInfo(sourcesListManager):
 		if dist is None:
 			res.append(getSpecificInstalledPackage(packageName,info.split(' ')[1]))
 			continue
-		version_release=info.split(' ')[1].rsplit('-',1)
-		version=version_release[0].split(':')[-1]
-		release=None
-		if len(version_release)>1:
-			release=version_release[1]
+		version_release=info.split(' ')[1]
+		version,release=RepoFileManager.splitVersionRelease(version_release)
 		package=sourcesListManager.getSpecificPackage(packageName,dist,version,release)
 		
 		if package is not None:
@@ -101,7 +88,7 @@ def getNewInstall(packages:list,options,sourcesListManager:SourcesListManager.So
 			willInstallPackages.append(parseInstallInfo(info,sourcesListManager))
 	if len(willInstallPackages)==0:
 		print("warning: no package will install")
-		includeInstalled=True
+		return None
 	resmap=dict()
 	entryMap=SpecificPackage.EntryMap()
 	if includeInstalled is True:
