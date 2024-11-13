@@ -87,8 +87,9 @@ class PackageEntry:
 		self.flags=flags
 		self.epoch=0
 		if version is not None:
-			self.epoch=int(version.split(':')[0])
-			version=version.split(':',1)[1]
+			if len(version.split(':'))>1:
+				self.epoch=int(version.split(':',1)[0])
+				version=version.split(':',1)[1]
 		self.version=version
 		self.release=release
 		self.fatherNode=None
