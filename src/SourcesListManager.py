@@ -133,7 +133,7 @@ class SourcesListManager:
 				return res
 		return None
 	def getSpecificPackage(self,name,dist,version,release)->SpecificPackage.SpecificPackage:
-		version=version.split(":")[-1]
+		#version=version.split(":")[-1]
 		for configItem in self.binaryConfigItems[dist]:
 			specificPackage=configItem.getSpecificPackage(name,version,release)
 			if specificPackage is not None:

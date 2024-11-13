@@ -110,16 +110,15 @@ def scanDeb(command,options,packages,genSpdx=True,saveSpdxPath=None,genCyclonedx
 						print(", ",end='')
 					print(packageName,end='')
 				print(" have cve:")
-				print(cves)
 				for cve in cves:
-					print(" "+cve['name'])
+					print(" "+cve['name']+", score: "+str(cve['score']))
 	if assumeNo is True or dumpFileOnly is True:
 		return False
 	if noPackagesWillInstalled is True:
 		return True
 	if haveOutput is False:
 		print("All packages have no CVE")
-	print('Are you true to continue? (y/n)')
+	print('Are you sure to continue? (y/n)')
 	userinput=input()
 	if userinput=='y':
 		return True
