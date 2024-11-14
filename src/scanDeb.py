@@ -30,6 +30,9 @@ def queryCVE(spdxObj,aptConfigure:loadConfig.aptcConfigure):
 	else:
 		print(f'failed to query CVE: Request failed with status code {response.status_code}')
 		return None
+	
+def checkIncludeDepends(spdxObj):
+	print(spdxObj)
 def scanDeb(command,options,packages,genSpdx=True,saveSpdxPath=None,genCyclonedx=False,saveCyclonedxPath=None,dumpFileOnly=False):
 	assumeNo=False
 	noPackagesWillInstalled=True
@@ -87,6 +90,20 @@ def scanDeb(command,options,packages,genSpdx=True,saveSpdxPath=None,genCyclonedx
 		with open(spdxPath,"r") as f:
 			spdxObj=json.load(f)
 		cves=queryCVE(spdxObj,aptConfigure)
+		for package in willInstallPackages:
+			if package==selectedPackage:
+				continue
+			packageFilePath=downloadPackage(package)
+			if packageFilePath is None:
+				continue
+			spdxPath=spdxmain(package.fullName,packageFilePath,[],'spdx')
+			with open(spdxPath,"r") as f:
+				spdxObj=json.load(f)
+			if not checkIncludeDepends(spdxObj):
+				continue
+			dependsCves=queryCVE(spdxObj,aptConfigure)
+			
+
 		if cves is None:
 			continue
 		selectedPackage_cves=cves[selectedPackage.packageInfo.name]
