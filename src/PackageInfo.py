@@ -41,6 +41,7 @@ class PackageInfo:
 		for item,value in extraInfos.items():
 			if is_first is True:
 				extraInfoRaw+='?'
+				is_first=False
 			else:
 				extraInfoRaw+='&'
 			extraInfoRaw+=item+'='+value

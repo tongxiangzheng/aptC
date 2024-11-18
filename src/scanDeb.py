@@ -7,6 +7,7 @@ import normalize
 import json
 import requests
 import loadConfig
+import spdxReader
 
 def downloadPackage(selectedPackage):
 	packagePath=nwkTools.downloadFile(selectedPackage.repoURL+'/'+selectedPackage.fileName,'/tmp/aptC/packages',normalize.normalReplace(selectedPackage.fileName.rsplit('/',1)[1]))
@@ -32,7 +33,11 @@ def queryCVE(spdxObj,aptConfigure:loadConfig.aptcConfigure):
 		return None
 	
 def checkIncludeDepends(spdxObj):
-	print(spdxObj)
+	res=spdxReader.parseSpdxObj(spdxObj)
+	if len(res)!=0:
+		return True
+	else:
+		return False
 def scanDeb(command,options,packages,genSpdx=True,saveSpdxPath=None,genCyclonedx=False,saveCyclonedxPath=None,dumpFileOnly=False):
 	assumeNo=False
 	noPackagesWillInstalled=True
@@ -101,9 +106,18 @@ def scanDeb(command,options,packages,genSpdx=True,saveSpdxPath=None,genCyclonedx
 				spdxObj=json.load(f)
 			if not checkIncludeDepends(spdxObj):
 				continue
+			#print("find depends!!!")
+			#print(spdxPath)
 			dependsCves=queryCVE(spdxObj,aptConfigure)
+			if dependsCves is None:
+				continue
+			for projectName,c in dependsCves.items():
+				if len(c)==0:
+					continue
+				if projectName not in cves[package.packageInfo.name]:
+					cves[package.packageInfo.name].extend(c)
 			
-
+			
 		if cves is None:
 			continue
 		selectedPackage_cves=cves[selectedPackage.packageInfo.name]
