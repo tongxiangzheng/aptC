@@ -617,7 +617,8 @@ def convertSpdx_Deb_syft11(syft_json, project_name, output_file, ExterDependenci
     for exterDependency in ExterDependencies:
         spdx_id_externalDependency = f"SPDXRef-Package-Deb---{exterDependency.name}--{uuid.uuid4()}"
         # 存储所有外部依赖的spdxid
-        
+        arch = exterDependency.arch
+        dscLin = exterDependency.dscLink
         # print('purl:',exterDependency.purl)
         spdx_id_externalDependencies.append(spdx_id_externalDependency)
         package_exterDependency = Package(
@@ -627,8 +628,9 @@ def convertSpdx_Deb_syft11(syft_json, project_name, output_file, ExterDependenci
             version=exterDependency.version,
             source_info="External Dependency",
             files_analyzed=False,
+            summary = arch,
             description=f"Deb",
-            # comment = f"{exterDependency.gitLink}",
+            comment = dscLin,
             copyright_text="Copyright 2024 Jane Doe",
         )
         package_exterDependency.license_concluded = SpdxNoAssertion()
