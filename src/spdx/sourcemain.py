@@ -9,12 +9,15 @@ import SyftAnalysis
 class ExternalDependency:
 	name:str
 	version:str
-	gitLink:str
+	dscLink:str
+	arch:str
 	purl:str
-	def __init__(self,name,version,gitLink,purl):
+	def __init__(self,name,version,dscLink,arch,purl):
 		self.name = name
 		self.version = version
-		self.gitLink = gitLink
+		self.dscLink = dscLink
+		self.arch = arch
+		# self.gitLink = gitLink#现在是dscLink
 		self.purl = purl
 
 def srcmain(packageName,packageFilePath,dependsList,sbomType='spdx',saveSbomPath='/tmp/aptC/src'):
@@ -45,13 +48,17 @@ def getExternalDependencies(dependsList):
 		name = depends['name']
 		version = depends['version']
 		purl = depends['purl']
-		gitLink = ''
-		if 'gitLink' in depends:
-			gitLink = str(depends['gitLink'])
+		dscLink = ''
+		if 'dscLink' in depends:
+			dscLink = str(depends['dscLink'])
+		arch = ''
+		if 'arch'in depends:
+			arch = str(depends['arch'])
 		Dependency = ExternalDependency(
 			name = name,
 			version= version,
-			gitLink= gitLink,
+			dscLink= dscLink,
+			arch = arch,
 			purl=purl
 		)
 		ExternalDependencies.append(Dependency)
