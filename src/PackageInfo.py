@@ -20,10 +20,12 @@ class PackageInfo:
 		if self.release is not None:
 			release="-"+self.release
 		version=self.version+release
-		
 		info={'name':normalize.normalReplace(self.name),'version':normalize.normalReplace(version),'purl':self.dumpAsPurl()}
 		if self.dscLink is not None:
 			info['dscLink']=self.dscLink
+		if self.arch is not None:
+			info['arch']=self.arch
+		
 		return info
 
 	def dumpAsPurl(self):
