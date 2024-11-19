@@ -23,7 +23,7 @@ class PackageInfo:
 		info={'name':normalize.normalReplace(self.name),'version':normalize.normalReplace(version),'purl':self.dumpAsPurl()}
 		if self.dscLink is not None:
 			info['dscLink']=self.dscLink
-		if self.arch is not None:
+		if self.arch is not None and self.arch!="":
 			info['arch']=self.arch
 		
 		return info
