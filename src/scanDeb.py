@@ -120,7 +120,10 @@ def scanDeb(command,options,packages,genSpdx=True,saveSpdxPath=None,genCyclonedx
 			
 		if cves is None:
 			continue
-		selectedPackage_cves=cves[selectedPackage.packageInfo.name]
+		if selectedPackage.packageInfo.name in selectedPackage_cves:
+			selectedPackage_cves=cves[selectedPackage.packageInfo.name]
+		else:
+			selectedPackage_cves=[]
 		for projectName,c in cves.items():
 			if len(c)==0:
 				continue
