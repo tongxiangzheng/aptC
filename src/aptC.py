@@ -11,6 +11,8 @@ def runApt(exec,args,setyes=False):
 			continue
 		if arg.startswith('--gencyclonedx'):
 			continue
+		if arg=='-n':
+			continue
 		cmd+=" "+arg
 		if arg=='-y':
 			setyes=False
@@ -56,7 +58,7 @@ def user_main(exec,args, exit_code=False):
 		command,options,packages=parseCommand(args)
 		if command=='install' or command=='reinstall':
 			if scanDeb.scanDeb(command,options,packages) is True:
-				runApt(exec,args,setyes=True)
+				errcode=runApt(exec,args,setyes=True)
 			else:
 				errcode=0
 		elif command=='genspdx':
