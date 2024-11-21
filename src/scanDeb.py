@@ -5,7 +5,7 @@ from loguru import logger as log
 from spdx.spdxmain import spdxmain
 import normalize
 import json
-import requests
+import queryCVE
 import loadConfig
 import spdxReader
 
@@ -16,21 +16,7 @@ def downloadPackage(selectedPackage):
 	#packagePath="/home/txz/code/aptC/test/acct-underline-6.6.4-4build2-underline-amd64.deb"
 	#for test
 	return packagePath
-def queryCVE(spdxObj,aptConfigure:loadConfig.aptcConfigure):
-	url=aptConfigure.querycveURL
-	try:
-		response = requests.post(url, json=spdxObj)
-	except requests.exceptions.ConnectionError as e:
-		print("failed to query CVE: Unable to connect: "+url)
-		return None
-	except Exception as e:
-		print(f'failed to query CVE: {e}')
-		return None
-	if response.status_code == 200:
-		return response.json()
-	else:
-		print(f'failed to query CVE: Request failed with status code {response.status_code}')
-		return None
+
 	
 def checkIncludeDepends(spdxObj):
 	res=spdxReader.parseSpdxObj(spdxObj)
@@ -94,7 +80,7 @@ def scanDeb(command,options,packages,genSpdx=True,saveSpdxPath=None,genCyclonedx
 
 		with open(spdxPath,"r") as f:
 			spdxObj=json.load(f)
-		cves=queryCVE(spdxObj,aptConfigure)
+		cves=queryCVE.queryCVE(spdxObj,aptConfigure)
 		for package in willInstallPackages:
 			if package==selectedPackage:
 				continue
@@ -108,7 +94,7 @@ def scanDeb(command,options,packages,genSpdx=True,saveSpdxPath=None,genCyclonedx
 				continue
 			#print("find depends!!!")
 			#print(spdxPath)
-			dependsCves=queryCVE(spdxObj,aptConfigure)
+			dependsCves=queryCVE.queryCVE(spdxObj,aptConfigure)
 			if dependsCves is None:
 				continue
 			for projectName,c in dependsCves.items():

@@ -3,7 +3,7 @@ import os
 import scanDeb
 import scanBin
 import scanSrc
-
+import queryCVE
 def runApt(exec,args,setyes=False):
 	cmd=exec
 	for arg in args:
@@ -77,6 +77,8 @@ def user_main(exec,args, exit_code=False):
 			errcode=scanBin.scanBin(packages,options)
 		elif command=='scansrc':
 			errcode=scanSrc.scanSrc(packages,options)
+		elif command=='querycve':
+			errcode=queryCVE.queryCVECli(packages,options)
 	if errcode is None:
 		errcode=runApt(exec,args)
 
