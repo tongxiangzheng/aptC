@@ -1,5 +1,5 @@
 import autotest_src
-testName="gnome-settings-daemon"
+testName="glusterfs"
 with open("jammyinfo.txt") as f:
 	data=f.readlines()
 res=[]
