@@ -16,7 +16,7 @@ class SourceConfigItem:
 	def getRepoFileManager(self):
 		if self.repoFileManager is None:
 			repoPath=self.getFilePath()
-			self.repoFileManager=RepoFileManager.RepoFileManager(self.url,repoPath,osInfo.OSName,self.dist)
+			self.repoFileManager=RepoFileManager.RepoFileManager(self.url,repoPath,osInfo.OSName,osInfo.OSDist)
 	def getGitLink(self,name,arch):
 		#abandon
 		self.getRepoFileManager()
