@@ -209,8 +209,8 @@ def scanSrc(srcs,options):
 				depends[p.packageInfo.name+'@'+p.packageInfo.version]=p.packageInfo.dumpAsDict()
 			dependsList=list(depends.values())
 			if genSpdx is True:
-				srcmain(normalize.normalReplace(package.fullName),srcPath,dependsList,'spdx',spdxPath)
+				sourcemain.srcmain(normalize.normalReplace(package.fullName),srcPath,dependsList,'spdx',spdxPath)
 			if genCyclonedx is True:
-				srcmain(normalize.normalReplace(package.fullName),srcPath,dependsList,'cyclonedx',cyclonedxPath)
+				sourcemain.srcmain(normalize.normalReplace(package.fullName),srcPath,dependsList,'cyclonedx',cyclonedxPath)
 			print("generate SBOM for: "+package.fullName)
 	return 0
